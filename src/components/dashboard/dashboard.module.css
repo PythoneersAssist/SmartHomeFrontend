@@ -1,0 +1,154 @@
+.sidebar {
+  background: linear-gradient(180deg, #0d1b2a 0%, #0a1628 100%);
+  border-right: 1px solid rgba(34, 211, 238, 0.08);
+}
+
+.navItem {
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.navItem:hover {
+  background: rgba(34, 211, 238, 0.06);
+}
+
+.navActive {
+  background: rgba(34, 211, 238, 0.1) !important;
+  border-left-color: #22d3ee;
+}
+
+.statCard {
+  position: relative;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.6));
+  border: 1px solid rgba(34, 211, 238, 0.15);
+  border-radius: 16px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.statCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #06b6d4, #10b981);
+  border-radius: 16px 16px 0 0;
+  opacity: 0.6;
+}
+
+.roomCard {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.5));
+  border: 1px solid rgba(34, 211, 238, 0.12);
+  border-radius: 16px;
+  transition: all 0.25s ease;
+}
+
+.roomCard:hover {
+  border-color: rgba(34, 211, 238, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.deviceCard {
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.5));
+  border: 1px solid rgba(34, 211, 238, 0.12);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.deviceCard:hover {
+  transform: translateY(-3px);
+  border-color: rgba(34, 211, 238, 0.28);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(34, 211, 238, 0.04);
+}
+
+.deviceCardOn {
+  border-color: rgba(34, 211, 238, 0.35);
+  box-shadow: 0 0 24px rgba(34, 211, 238, 0.06);
+}
+
+.toggleTrack {
+  width: 48px;
+  height: 26px;
+  border-radius: 13px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.25s ease;
+  flex-shrink: 0;
+}
+
+.toggleTrackOn {
+  background: linear-gradient(135deg, #06b6d4, #10b981);
+}
+
+.toggleTrackOff {
+  background: rgba(100, 116, 139, 0.4);
+}
+
+.toggleKnob {
+  position: absolute;
+  top: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  transition: left 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.toggleKnobOn {
+  left: 25px;
+}
+
+.toggleKnobOff {
+  left: 3px;
+}
+
+.sectionTitle {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.modal {
+  background: rgba(10, 25, 41, 0.85);
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modalCard {
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  border-radius: 24px;
+  animation: scaleIn 0.25s ease-out;
+}
+
+.formInput {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  border-radius: 12px;
+  color: white;
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: #22d3ee;
+}
+
+.formInput::placeholder {
+  color: rgba(148, 163, 184, 0.5);
+}

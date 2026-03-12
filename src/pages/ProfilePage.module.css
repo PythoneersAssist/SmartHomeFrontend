@@ -1,0 +1,35 @@
+.pageGlow {
+  position: fixed;
+  top: -20%;
+  left: 30%;
+  width: 40%;
+  height: 60%;
+  background: radial-gradient(ellipse at center, rgba(6, 182, 212, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.formInput {
+  border-radius: 0.75rem;
+  border: 1px solid rgba(165, 243, 252, 0.15);
+  background: rgba(2, 6, 23, 0.6);
+  padding: 0.625rem 0.75rem;
+  color: white;
+  font-size: 0.875rem;
+}
+
+.formInput:focus {
+  border-color: rgb(103, 232, 249);
+  outline: none;
+}
+
+.card {
+  border-radius: 1rem;
+  border: 1px solid rgba(165, 243, 252, 0.1);
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  transition: border-color 0.2s;
+}
+
+.card:hover {
+  border-color: rgba(165, 243, 252, 0.2);
+}
