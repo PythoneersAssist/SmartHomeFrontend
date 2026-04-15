@@ -43,6 +43,51 @@
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
 }
 
+.roomTabsRail {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  overflow-x: auto;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  scrollbar-width: none;
+}
+
+.roomTabsRail::-webkit-scrollbar {
+  display: none;
+}
+
+.roomTab {
+  position: relative;
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(148, 163, 184, 0.84);
+  padding: 0 0 0.62rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: color 0.2s ease;
+}
+
+.roomTab:hover {
+  color: #e2e8f0;
+}
+
+.roomTabActive {
+  color: #ffffff;
+}
+
+.roomTabActive::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 3px;
+  border-radius: 999px;
+  background: #f8fafc;
+}
+
 .deviceCard {
   background: linear-gradient(145deg, rgba(17, 19, 23, 0.86), rgba(31, 35, 40, 0.54));
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -161,4 +206,8 @@
 
 .formInput::placeholder {
   color: rgba(148, 163, 184, 0.5);
+}
+
+.formInputWithIcon {
+  padding-left: 2.25rem !important;
 }

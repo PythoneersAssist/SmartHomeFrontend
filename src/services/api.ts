@@ -63,7 +63,7 @@ async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
 type TokenResponse = { access_token: string; token_type: string };
 type UserResponse = { id: string; username: string; email: string; registered_at: string };
 type HousesResponse = { message: string; houses: { id: string; name: string; description: string }[] };
-type RoomsResponse = { message: string; rooms: { id: string; name: string; floor: string; house_id: string }[] };
+type RoomsResponse = { message: string; rooms: { id: string; name: string; floor: string; room_type?: string | null; house_id: string }[] };
 
 export const backendApi = {
   // Auth — OAuth2 form-based login

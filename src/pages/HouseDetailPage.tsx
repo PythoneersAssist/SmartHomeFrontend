@@ -9,6 +9,7 @@ import { DevicesTab } from '../components/dashboard/DevicesTab';
 import { EditDeviceModal } from '../components/dashboard/EditDeviceModal';
 import { EditRoomModal } from '../components/dashboard/EditRoomModal';
 import { EnergyTab } from '../components/dashboard/EnergyTab';
+import { FavouritesTab } from '../components/dashboard/FavouritesTab';
 import { MobileDrawer } from '../components/dashboard/MobileDrawer';
 import { OverviewTab } from '../components/dashboard/OverviewTab';
 import { RoomsTab } from '../components/dashboard/RoomsTab';
@@ -18,8 +19,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { useHouseStore } from '../contexts/HouseContext';
 import { useToast } from '../contexts/ToastContext';
 import { backendApi } from '../services/api';
+import { localData } from '../services/storage';
 import type { Device, Room } from '../types/domain';
-import { DEVICE_TYPE_LABELS } from '../types/domain';
+import { DEFAULT_ROOM_TYPE, DEVICE_TYPE_LABELS } from '../types/domain';
 
 export function HouseDetailPage() {
   const { houseId } = useParams();
@@ -44,8 +46,8 @@ export function HouseDetailPage() {
 
   const [pendingDelete, setPendingDelete] = useState<{ kind: 'room'; room: Room } | { kind: 'device'; deviceId: string; deviceName: string } | null>(null);
 
-  // Room drill-down state
-  const [expandedRoomId, setExpandedRoomId] = useState<string | null>(null);
+  // Selected room for overview filtering
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
 
   // Mobile menu state
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -53,11 +55,17 @@ export function HouseDetailPage() {
   // Device search/filter state
   const [deviceSearch, setDeviceSearch] = useState('');
   const [deviceTypeFilter, setDeviceTypeFilter] = useState<number | -2>(-2); // -2 = all
+  const [favoriteDeviceIds, setFavoriteDeviceIds] = useState<string[]>([]);
 
   // Filter devices to only those belonging to this house's rooms
   const roomIds = useMemo(() => new Set(rooms.map((r) => r.id)), [rooms]);
   const houseDevices = useMemo(() => devices.filter((d) => roomIds.has(d.room_id)), [devices, roomIds]);
   const houseRooms = rooms;
+  const favoriteDeviceIdSet = useMemo(() => new Set(favoriteDeviceIds), [favoriteDeviceIds]);
+  const favoriteDevices = useMemo(
+    () => houseDevices.filter((device) => favoriteDeviceIdSet.has(device.id)),
+    [houseDevices, favoriteDeviceIdSet],
+  );
 
   // Build a room lookup map for device display
   const roomMap = useMemo(() => {
@@ -111,6 +119,30 @@ export function HouseDetailPage() {
   }, [houseId]);
 
   useEffect(() => {
+    if (!houseId) {
+      setFavoriteDeviceIds([]);
+      return;
+    }
+
+    setFavoriteDeviceIds(localData.getFavoriteDeviceIds(houseId));
+  }, [houseId]);
+
+  useEffect(() => {
+    if (!houseId) {
+      return;
+    }
+    localData.saveFavoriteDeviceIds(houseId, favoriteDeviceIds);
+  }, [houseId, favoriteDeviceIds]);
+
+  useEffect(() => {
+    const validIds = new Set(houseDevices.map((device) => device.id));
+    setFavoriteDeviceIds((prev) => {
+      const next = prev.filter((id) => validIds.has(id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [houseDevices]);
+
+  useEffect(() => {
     setDeviceForm((prev) => {
       if (houseRooms.length === 0) {
         return { ...prev, room_id: '' };
@@ -124,6 +156,16 @@ export function HouseDetailPage() {
     });
   }, [houseRooms]);
 
+  useEffect(() => {
+    if (!selectedRoomId) {
+      return;
+    }
+
+    if (!houseRooms.some((room) => room.id === selectedRoomId)) {
+      setSelectedRoomId(null);
+    }
+  }, [houseRooms, selectedRoomId]);
+
   if (!houseId || !house) {
     return <Navigate to="/houses" replace />;
   }
@@ -136,7 +178,7 @@ export function HouseDetailPage() {
     setError(null);
 
     try {
-      await backendApi.createRoom({ ...roomForm, house_id: houseId });
+      await backendApi.createRoom({ ...roomForm, floor: 'Entrance', house_id: houseId });
       setRoomForm(initialRoomForm);
       await loadData();
       addToast('Room created successfully');
@@ -158,7 +200,7 @@ export function HouseDetailPage() {
       await backendApi.updateRoom({
         room_id: editingRoom.id,
         name: editingRoom.name,
-        floor: editingRoom.floor,
+        room_type: editingRoom.room_type ?? DEFAULT_ROOM_TYPE,
       });
       setEditingRoom(null);
       await loadData();
@@ -267,6 +309,15 @@ export function HouseDetailPage() {
     }
   }
 
+  function handleToggleFavorite(deviceId: string) {
+    const isFavorite = favoriteDeviceIdSet.has(deviceId);
+    setFavoriteDeviceIds((prev) => {
+      const alreadyFavorite = prev.includes(deviceId);
+      return alreadyFavorite ? prev.filter((id) => id !== deviceId) : [...prev, deviceId];
+    });
+    addToast(isFavorite ? 'Removed from favourites' : 'Added to favourites');
+  }
+
   return (
     <div className="appShellBackground flex h-screen overflow-hidden">
       {/* ── Sidebar ── */}
@@ -334,9 +385,11 @@ export function HouseDetailPage() {
                   rooms={houseRooms}
                   devices={houseDevices}
                   roomMap={roomMap}
-                  expandedRoomId={expandedRoomId}
-                  onExpandRoom={setExpandedRoomId}
+                  selectedRoomId={selectedRoomId}
+                  onSelectRoom={setSelectedRoomId}
                   onToggleDevice={(d) => void handleToggleDevice(d)}
+                  favoriteDeviceIds={favoriteDeviceIdSet}
+                  onToggleFavorite={handleToggleFavorite}
                   submitting={submitting}
                 />
               )}
@@ -348,7 +401,7 @@ export function HouseDetailPage() {
                   roomForm={roomForm}
                   onRoomFormChange={setRoomForm}
                   onCreateRoom={handleCreateRoom}
-                  onEditRoom={setEditingRoom}
+                  onEditRoom={(room) => setEditingRoom({ ...room, room_type: room.room_type ?? DEFAULT_ROOM_TYPE })}
                   onDeleteRoom={(room) => setPendingDelete({ kind: 'room', room })}
                   submitting={submitting}
                 />
@@ -370,6 +423,18 @@ export function HouseDetailPage() {
                   onSearchChange={setDeviceSearch}
                   deviceTypeFilter={deviceTypeFilter}
                   onTypeFilterChange={setDeviceTypeFilter}
+                  favoriteDeviceIds={favoriteDeviceIdSet}
+                  onToggleFavorite={handleToggleFavorite}
+                  submitting={submitting}
+                />
+              )}
+
+              {activeTab === 'favourites' && (
+                <FavouritesTab
+                  favoriteDevices={favoriteDevices}
+                  roomMap={roomMap}
+                  onToggleDevice={(d) => void handleToggleDevice(d)}
+                  onToggleFavorite={handleToggleFavorite}
                   submitting={submitting}
                 />
               )}

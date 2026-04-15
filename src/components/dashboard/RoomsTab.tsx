@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import type { Device, Room } from '../../types/domain';
-import { FLOOR_CHOICES } from '../../types/domain';
+import { DEFAULT_ROOM_TYPE, ROOM_TYPE_GROUPS, getRoomTypeLabel } from '../../types/domain';
 import type { RoomFormState } from './types';
+import { getRoomTypeIcon } from './roomIcons';
 import styles from './dashboard.module.css';
 
 type Props = {
@@ -45,7 +46,10 @@ export function RoomsTab({ rooms, devices, roomForm, onRoomFormChange, onCreateR
                 </div>
                 <div className="flex-1">
                   <p className="font-bold text-white">{room.name}</p>
-                  <p className="text-xs text-slate-400">{room.floor} &middot; {devices.filter((d) => d.room_id === room.id).length} devices</p>
+                  <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
+                    <span className="text-emerald-300">{getRoomTypeIcon(room.room_type ?? DEFAULT_ROOM_TYPE)}</span>
+                    <span>{getRoomTypeLabel(room.room_type)} &middot; {devices.filter((d) => d.room_id === room.id).length} devices</span>
+                  </div>
                 </div>
               </div>
               <div className="mt-3 flex gap-2">
@@ -98,15 +102,19 @@ export function RoomsTab({ rooms, devices, roomForm, onRoomFormChange, onCreateR
                 />
               </label>
               <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
-                Floor
+                Room Type
                 <select
                   className={styles.formInput}
-                  onChange={(e) => onRoomFormChange({ ...roomForm, floor: e.target.value })}
+                  onChange={(e) => onRoomFormChange({ ...roomForm, room_type: e.target.value })}
                   required
-                  value={roomForm.floor}
+                  value={roomForm.room_type}
                 >
-                  {FLOOR_CHOICES.map((f) => (
-                    <option key={f} value={f}>{f}</option>
+                  {ROOM_TYPE_GROUPS.map((group) => (
+                    <optgroup key={group.label} label={group.label}>
+                      {group.options.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               </label>

@@ -27,13 +27,15 @@ export type Room = {
   id: string;
   name: string;
   floor: string;
+  room_type?: string | null;
   house_id: string;
   devices?: Device[];
 };
 
 export type RoomCreateInput = {
   name: string;
-  floor: string;
+  floor?: string;
+  room_type: string;
   house_id: string;
 };
 
@@ -41,6 +43,7 @@ export type RoomUpdateInput = {
   room_id: string;
   name?: string;
   floor?: string;
+  room_type?: string;
 };
 
 export type DeviceCreateInput = {
@@ -149,6 +152,96 @@ export const DEVICE_TYPE_OPTIONS = Object.entries(DEVICE_TYPE_LABELS)
   .map(([key, label]) => ({ value: Number(key), label }));
 
 export const FLOOR_CHOICES = ['Entrance', '1st', '2nd', '3rd', '4th', '5th'];
+
+export const ROOM_TYPE_LABELS: Record<string, string> = {
+  living_room: 'Living Room (Sufragerie)',
+  kitchen: 'Kitchen (Bucatarie)',
+  master_bedroom: 'Master Bedroom (Dormitor Principal)',
+  bedroom: 'Bedroom (Dormitor)',
+  bathroom: 'Bathroom (Baie)',
+  dining_room: 'Dining Room (Loc de luat masa)',
+  entrance_hallway: 'Entrance / Hallway (Intrare / Hol)',
+  home_office: 'Home Office (Birou)',
+  library: 'Library (Biblioteca)',
+  laundry_room: 'Laundry Room (Spalatorie)',
+  garage: 'Garage (Garaj)',
+  storage_room: 'Storage Room / Pantry (Camara / Depozitare)',
+  basement: 'Basement (Subsol)',
+  attic: 'Attic (Pod)',
+  gym: 'Gym (Sala de fitness)',
+  home_theater: 'Home Theater (Cinema acasa)',
+  game_room: 'Game Room (Camera de jocuri)',
+  balcony: 'Balcony (Balcon)',
+  terrace: 'Terrace (Terasa)',
+  garden: 'Garden (Gradina)',
+  backyard: 'Backyard (Curte)',
+  pool_area: 'Pool Area (Piscina)',
+  other: 'Other (Alta zona)',
+};
+
+export type RoomTypeGroup = {
+  label: string;
+  options: { value: string; label: string }[];
+};
+
+export const ROOM_TYPE_GROUPS: RoomTypeGroup[] = [
+  {
+    label: 'Zone Principale (Core Rooms)',
+    options: [
+      { value: 'living_room', label: ROOM_TYPE_LABELS.living_room },
+      { value: 'kitchen', label: ROOM_TYPE_LABELS.kitchen },
+      { value: 'master_bedroom', label: ROOM_TYPE_LABELS.master_bedroom },
+      { value: 'bedroom', label: ROOM_TYPE_LABELS.bedroom },
+      { value: 'bathroom', label: ROOM_TYPE_LABELS.bathroom },
+      { value: 'dining_room', label: ROOM_TYPE_LABELS.dining_room },
+      { value: 'entrance_hallway', label: ROOM_TYPE_LABELS.entrance_hallway },
+    ],
+  },
+  {
+    label: 'Zone de Lucru si Depozitare',
+    options: [
+      { value: 'home_office', label: ROOM_TYPE_LABELS.home_office },
+      { value: 'library', label: ROOM_TYPE_LABELS.library },
+      { value: 'laundry_room', label: ROOM_TYPE_LABELS.laundry_room },
+      { value: 'garage', label: ROOM_TYPE_LABELS.garage },
+      { value: 'storage_room', label: ROOM_TYPE_LABELS.storage_room },
+      { value: 'basement', label: ROOM_TYPE_LABELS.basement },
+      { value: 'attic', label: ROOM_TYPE_LABELS.attic },
+    ],
+  },
+  {
+    label: 'Zone de Relaxare (Leisure)',
+    options: [
+      { value: 'gym', label: ROOM_TYPE_LABELS.gym },
+      { value: 'home_theater', label: ROOM_TYPE_LABELS.home_theater },
+      { value: 'game_room', label: ROOM_TYPE_LABELS.game_room },
+      { value: 'balcony', label: ROOM_TYPE_LABELS.balcony },
+      { value: 'terrace', label: ROOM_TYPE_LABELS.terrace },
+    ],
+  },
+  {
+    label: 'Zone Exterioare (Outdoor)',
+    options: [
+      { value: 'garden', label: ROOM_TYPE_LABELS.garden },
+      { value: 'backyard', label: ROOM_TYPE_LABELS.backyard },
+      { value: 'pool_area', label: ROOM_TYPE_LABELS.pool_area },
+    ],
+  },
+  {
+    label: 'Altele',
+    options: [{ value: 'other', label: ROOM_TYPE_LABELS.other }],
+  },
+];
+
+export const DEFAULT_ROOM_TYPE = 'other';
+
+export function getRoomTypeLabel(roomType: string | null | undefined): string {
+  if (!roomType) {
+    return ROOM_TYPE_LABELS[DEFAULT_ROOM_TYPE];
+  }
+
+  return ROOM_TYPE_LABELS[roomType] ?? ROOM_TYPE_LABELS[DEFAULT_ROOM_TYPE];
+}
 
 // ─── Device Parameter Definitions ──────────────
 // Describes the UI control for each parameter key, per device type.

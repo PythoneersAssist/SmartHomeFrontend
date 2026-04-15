@@ -14,6 +14,15 @@ export const NAV_ITEMS: NavItem[] = [
     ),
   },
   {
+    id: 'rooms',
+    label: 'Rooms',
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+      </svg>
+    ),
+  },
+  {
     id: 'devices',
     label: 'Devices',
     icon: (
@@ -23,11 +32,11 @@ export const NAV_ITEMS: NavItem[] = [
     ),
   },
   {
-    id: 'rooms',
-    label: 'Rooms',
+    id: 'favourites',
+    label: 'Favourites',
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.012 3.114a1 1 0 00.95.69h3.276c.969 0 1.371 1.24.588 1.81l-2.65 1.925a1 1 0 00-.364 1.118l1.012 3.114c.3.922-.755 1.688-1.538 1.118l-2.65-1.925a1 1 0 00-1.175 0l-2.65 1.925c-.783.57-1.838-.196-1.539-1.118l1.013-3.114a1 1 0 00-.364-1.118L4.223 8.54c-.783-.57-.38-1.81.588-1.81h3.276a1 1 0 00.95-.69l1.012-3.114z" />
       </svg>
     ),
   },

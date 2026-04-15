@@ -1,6 +1,6 @@
 import type { FormEvent } from 'react';
 import type { Room } from '../../types/domain';
-import { FLOOR_CHOICES } from '../../types/domain';
+import { DEFAULT_ROOM_TYPE, ROOM_TYPE_GROUPS } from '../../types/domain';
 import styles from './dashboard.module.css';
 
 type Props = {
@@ -25,14 +25,18 @@ export function EditRoomModal({ room, onChange, onSubmit, onClose }: Props) {
             />
           </label>
           <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
-            Floor
+            Room Type
             <select
               className={styles.formInput}
-              onChange={(e) => onChange({ ...room, floor: e.target.value })}
-              value={room.floor}
+              onChange={(e) => onChange({ ...room, room_type: e.target.value })}
+              value={room.room_type ?? DEFAULT_ROOM_TYPE}
             >
-              {FLOOR_CHOICES.map((f) => (
-                <option key={f} value={f}>{f}</option>
+              {ROOM_TYPE_GROUPS.map((group) => (
+                <optgroup key={group.label} label={group.label}>
+                  {group.options.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </label>

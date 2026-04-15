@@ -21,6 +21,8 @@ type Props = {
   onSearchChange: (search: string) => void;
   deviceTypeFilter: number;
   onTypeFilterChange: (filter: number) => void;
+  favoriteDeviceIds: Set<string>;
+  onToggleFavorite: (deviceId: string) => void;
   submitting: boolean;
 };
 
@@ -28,6 +30,7 @@ export function DevicesTab({
   devices, filteredDevices, rooms, roomMap, deviceForm, onDeviceFormChange,
   onCreateDevice, onEditDevice, onDeleteDevice, onToggleDevice,
   deviceSearch, onSearchChange, deviceTypeFilter, onTypeFilterChange, submitting,
+  favoriteDeviceIds, onToggleFavorite,
 }: Props) {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -54,7 +57,7 @@ export function DevicesTab({
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
-              className={`${styles.formInput} pl-9`}
+              className={`${styles.formInput} ${styles.formInputWithIcon}`}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search devices, types, rooms…"
               type="text"
@@ -91,14 +94,27 @@ export function DevicesTab({
         <div className="grid gap-3 sm:grid-cols-2">
           {filteredDevices.map((device) => {
             const isOn = Boolean(device.parameters?.status);
+            const isFavorite = favoriteDeviceIds.has(device.id);
             return (
               <div className={`${styles.deviceCard} ${isOn ? styles.deviceCardOn : ''} p-4`} key={device.id}>
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-bold text-white">{device.name}</p>
                     <p className="text-xs text-slate-400">{DEVICE_TYPE_LABELS[device.type] ?? 'Unknown'} &middot; {roomMap.get(device.room_id)?.name ?? '—'}</p>
                   </div>
-                  {getDeviceTypeIcon(device.type)}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      aria-label={isFavorite ? 'Remove from favourites' : 'Add to favourites'}
+                      className={`rounded-lg border px-2 py-1 transition ${isFavorite ? 'border-amber-300/45 bg-amber-400/15 text-amber-200' : 'border-white/15 bg-black/30 text-slate-400 hover:text-amber-200'}`}
+                      onClick={() => onToggleFavorite(device.id)}
+                      type="button"
+                    >
+                      <svg className="h-3.5 w-3.5" fill={isFavorite ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.012 3.114a1 1 0 00.95.69h3.276c.969 0 1.371 1.24.588 1.81l-2.65 1.925a1 1 0 00-.364 1.118l1.012 3.114c.3.922-.755 1.688-1.538 1.118l-2.65-1.925a1 1 0 00-1.175 0l-2.65 1.925c-.783.57-1.838-.196-1.539-1.118l1.013-3.114a1 1 0 00-.364-1.118L4.223 8.54c-.783-.57-.38-1.81.588-1.81h3.276a1 1 0 00.95-.69l1.012-3.114z" />
+                      </svg>
+                    </button>
+                    {getDeviceTypeIcon(device.type)}
+                  </div>
                 </div>
 
                 <div className="mt-3 flex items-center justify-between">
