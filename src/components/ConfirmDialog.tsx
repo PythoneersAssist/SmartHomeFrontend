@@ -17,7 +17,7 @@ export function ConfirmDialog({ open, title, message, confirmLabel = 'Delete', o
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-sm rounded-3xl border border-cyan-200/20 p-6 shadow-2xl"
+        className="w-full max-w-sm rounded-3xl border border-white/15 p-6 shadow-2xl"
         style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)' }}
         onClick={(e) => e.stopPropagation()}
       >

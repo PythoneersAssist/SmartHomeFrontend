@@ -1,41 +1,62 @@
 .houseCard {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.5));
-  border: 1px solid rgba(34, 211, 238, 0.12);
+  background: linear-gradient(135deg, rgba(17, 19, 23, 0.86), rgba(31, 35, 40, 0.54));
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 20px;
   transition: all 0.25s ease;
 }
 
+.topCard {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(160deg, rgba(18, 20, 24, 0.82), rgba(31, 35, 40, 0.55));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 18px 42px rgba(0, 0, 0, 0.35);
+}
+
+.addAction {
+  display: inline-flex;
+  height: 40px;
+  width: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.45);
+  color: #bbf7d0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: border-color 0.2s ease, transform 0.2s ease, color 0.2s ease;
+}
+
+.addAction:hover {
+  border-color: rgba(110, 231, 183, 0.55);
+  color: #dcfce7;
+  transform: translateY(-1px);
+}
+
 .houseCard:hover {
-  border-color: rgba(34, 211, 238, 0.3);
+  border-color: rgba(61, 220, 151, 0.35);
   transform: translateY(-2px);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
 }
 
-.houseCard::after {
-  content: '';
-  position: absolute;
-  inset: auto -30% -65% -30%;
-  height: 140px;
-  background: radial-gradient(circle, var(--house-color, rgba(6, 182, 212, 0.22)) 0%, rgba(255, 255, 255, 0) 74%);
-  pointer-events: none;
-}
-
 .formPanel {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.6));
-  border: 1px solid rgba(34, 211, 238, 0.15);
+  background: linear-gradient(135deg, rgba(18, 20, 24, 0.9), rgba(31, 35, 40, 0.58));
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 24px;
 }
 
 .modal {
-  background: rgba(10, 25, 41, 0.85);
+  background: rgba(6, 8, 10, 0.82);
   backdrop-filter: blur(8px);
 }
 
 .modalCard {
-  background: linear-gradient(135deg, #0f172a, #1e293b);
-  border: 1px solid rgba(34, 211, 238, 0.2);
+  background: linear-gradient(135deg, #12151a, #1e232b);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 24px;
 }
 
@@ -46,7 +67,7 @@
   transform: translateX(-50%);
   width: 600px;
   height: 400px;
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.08), transparent 70%);
+  background: radial-gradient(circle, rgba(61, 220, 151, 0.1), transparent 70%);
   pointer-events: none;
   z-index: 0;
 }

@@ -27,6 +27,7 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
 
   const [editing, setEditing] = useState<Automation | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const { addToast } = useToast();
 
   const deviceMap = new Map(houseDevices.map((d) => [d.id, d]));
@@ -78,6 +79,7 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
       };
       await backendApi.createAutomation(payload);
       resetForm();
+      setShowCreateModal(false);
       await loadAutomations();
       addToast('Automation created successfully');
     } catch (err) {
@@ -136,7 +138,7 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
       </div>
     );
   }
@@ -147,87 +149,20 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
         <p className="mb-4 rounded-xl border border-rose-400/30 bg-rose-500/10 px-4 py-2.5 text-sm text-rose-200">{error}</p>
       )}
 
-      <section className="grid gap-5 lg:grid-cols-[380px_1fr]">
-        {/* Create Form */}
-        <form className="rounded-2xl border border-cyan-200/10 bg-slate-900/50 p-5" onSubmit={handleCreate}>
-          <h2 className="text-lg font-extrabold text-white">Add Automation</h2>
-          <p className="mb-4 mt-1 text-sm text-slate-400">Create a rule to automate a device.</p>
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <p className={`${styles.sectionTitle} text-slate-300`}>Automations</p>
+          <button
+            aria-label="Add automation"
+            className={styles.addAction}
+            disabled={houseDevices.length === 0}
+            onClick={() => setShowCreateModal(true)}
+            type="button"
+          >
+            +
+          </button>
+        </div>
 
-          <div className="grid gap-3">
-            <label className="grid gap-1.5 text-sm font-semibold text-cyan-100">
-              Name
-              <input
-                className={styles.formInput}
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder="e.g. Turn on at sunset"
-                required
-                value={formName}
-              />
-            </label>
-            <label className="grid gap-1.5 text-sm font-semibold text-cyan-100">
-              Device
-              <select
-                className={styles.formInput}
-                onChange={(e) => setFormDeviceId(e.target.value)}
-                required
-                value={formDeviceId}
-              >
-                {houseDevices.length === 0 && <option value="">No devices</option>}
-                {houseDevices.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name} ({DEVICE_TYPE_LABELS[d.type] ?? 'Unknown'})
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="grid gap-1.5 text-sm font-semibold text-cyan-100">
-                Trigger
-                <select
-                  className={styles.formInput}
-                  onChange={(e) => setFormTriggerType(Number(e.target.value))}
-                  required
-                  value={formTriggerType}
-                >
-                  {AUTOMATION_TRIGGER_OPTIONS.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="grid gap-1.5 text-sm font-semibold text-cyan-100">
-                Value
-                <input
-                  className={styles.formInput}
-                  onChange={(e) => setFormTriggerValue(e.target.value)}
-                  placeholder={getTriggerPlaceholder(formTriggerType)}
-                  value={formTriggerValue}
-                />
-              </label>
-            </div>
-            <label className="grid gap-1.5 text-sm font-semibold text-cyan-100">
-              Day of Week (optional)
-              <select
-                className={styles.formInput}
-                onChange={(e) => setFormExecutionDay(e.target.value)}
-                value={formExecutionDay}
-              >
-                <option value="">Every day</option>
-                {WEEKDAY_LABELS.map((label, idx) => (
-                  <option key={idx} value={idx}>{label}</option>
-                ))}
-              </select>
-            </label>
-            <button
-              className="mt-1 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 px-4 py-2.5 font-bold text-slate-900 transition hover:-translate-y-0.5"
-              disabled={submitting || houseDevices.length === 0}
-              type="submit"
-            >
-              {submitting ? 'Adding...' : 'Add Automation'}
-            </button>
-          </div>
-        </form>
-
-        {/* Automation List */}
         <div className="grid gap-3 sm:grid-cols-2">
           {automations.map((auto) => {
             const device = deviceMap.get(auto.device_id);
@@ -248,7 +183,7 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
                 </div>
 
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="rounded-lg bg-cyan-500/10 px-2 py-1 text-xs font-semibold text-cyan-300">
+                  <span className="rounded-lg bg-emerald-500/12 px-2 py-1 text-xs font-semibold text-emerald-300">
                     {AUTOMATION_TRIGGER_LABELS[auto.trigger_type] ?? 'Unknown'}
                   </span>
                   {auto.trigger_value && (
@@ -265,7 +200,7 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
 
                 <div className="mt-3 flex gap-2">
                   <button
-                    className="rounded-lg border border-cyan-200/20 bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition hover:border-cyan-200/40"
+                    className="rounded-lg border border-white/15 bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition hover:border-emerald-300/45"
                     onClick={() => setEditing(auto)}
                     type="button"
                   >
@@ -283,12 +218,104 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
             );
           })}
           {automations.length === 0 && (
-            <p className="col-span-full rounded-xl border border-dashed border-cyan-500/15 p-8 text-center text-sm text-slate-500">
+            <p className="col-span-full rounded-xl border border-dashed border-white/15 p-8 text-center text-sm text-slate-500">
               No automations yet. Create one to get started.
             </p>
           )}
         </div>
       </section>
+
+      {showCreateModal && (
+        <section className={`${styles.modal} fixed inset-0 z-20 grid place-items-center px-4`}>
+          <form className={`${styles.modalCard} w-full max-w-lg p-6 shadow-2xl`} onSubmit={handleCreate}>
+            <h3 className="text-xl font-extrabold text-white">Add Automation</h3>
+            <p className="mb-4 mt-1 text-sm text-slate-400">Create a rule to automate a device.</p>
+
+            <div className="grid gap-3">
+              <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
+                Name
+                <input
+                  className={styles.formInput}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder="e.g. Turn on at sunset"
+                  required
+                  value={formName}
+                />
+              </label>
+              <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
+                Device
+                <select
+                  className={styles.formInput}
+                  onChange={(e) => setFormDeviceId(e.target.value)}
+                  required
+                  value={formDeviceId}
+                >
+                  {houseDevices.length === 0 && <option value="">No devices</option>}
+                  {houseDevices.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name} ({DEVICE_TYPE_LABELS[d.type] ?? 'Unknown'})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
+                  Trigger
+                  <select
+                    className={styles.formInput}
+                    onChange={(e) => setFormTriggerType(Number(e.target.value))}
+                    required
+                    value={formTriggerType}
+                  >
+                    {AUTOMATION_TRIGGER_OPTIONS.map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
+                  Value
+                  <input
+                    className={styles.formInput}
+                    onChange={(e) => setFormTriggerValue(e.target.value)}
+                    placeholder={getTriggerPlaceholder(formTriggerType)}
+                    value={formTriggerValue}
+                  />
+                </label>
+              </div>
+              <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
+                Day of Week (optional)
+                <select
+                  className={styles.formInput}
+                  onChange={(e) => setFormExecutionDay(e.target.value)}
+                  value={formExecutionDay}
+                >
+                  <option value="">Every day</option>
+                  {WEEKDAY_LABELS.map((label, idx) => (
+                    <option key={idx} value={idx}>{label}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="mt-5 flex gap-2">
+              <button
+                className="rounded-xl bg-gradient-to-r from-emerald-400 to-lime-300 px-4 py-2.5 text-sm font-bold text-slate-900"
+                disabled={submitting || houseDevices.length === 0}
+                type="submit"
+              >
+                {submitting ? 'Adding...' : 'Add Automation'}
+              </button>
+              <button
+                className="rounded-xl border border-white/20 bg-black/35 px-4 py-2.5 text-sm font-semibold text-slate-300"
+                onClick={() => setShowCreateModal(false)}
+                type="button"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
 
       {/* Edit Modal */}
       {editing && (
@@ -296,7 +323,7 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
           <form className={`${styles.modalCard} w-full max-w-md p-6 shadow-2xl`} onSubmit={handleUpdate}>
             <h3 className="text-xl font-extrabold text-white">Update Automation</h3>
             <div className="mt-4 grid gap-3">
-              <label className="grid gap-1.5 text-sm font-semibold text-cyan-100">
+              <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
                 Name
                 <input
                   className={styles.formInput}
@@ -305,7 +332,7 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
                 />
               </label>
               <div className="grid gap-3 sm:grid-cols-2">
-                <label className="grid gap-1.5 text-sm font-semibold text-cyan-100">
+                <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
                   Trigger
                   <select
                     className={styles.formInput}
@@ -317,7 +344,7 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
                     ))}
                   </select>
                 </label>
-                <label className="grid gap-1.5 text-sm font-semibold text-cyan-100">
+                <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
                   Value
                   <input
                     className={styles.formInput}
@@ -327,7 +354,7 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
                   />
                 </label>
               </div>
-              <label className="grid gap-1.5 text-sm font-semibold text-cyan-100">
+              <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
                 Day of Week
                 <select
                   className={styles.formInput}
@@ -343,7 +370,7 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
             </div>
             <div className="mt-5 flex gap-2">
               <button
-                className="rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 px-4 py-2.5 text-sm font-bold text-slate-900"
+                className="rounded-xl bg-gradient-to-r from-emerald-400 to-lime-300 px-4 py-2.5 text-sm font-bold text-slate-900"
                 disabled={submitting}
                 type="submit"
               >

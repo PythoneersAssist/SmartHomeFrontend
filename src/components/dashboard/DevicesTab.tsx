@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { FormEvent } from 'react';
 import type { Device, Room } from '../../types/domain';
 import { DEVICE_TYPE_LABELS, DEVICE_TYPE_OPTIONS } from '../../types/domain';
@@ -28,67 +29,26 @@ export function DevicesTab({
   onCreateDevice, onEditDevice, onDeleteDevice, onToggleDevice,
   deviceSearch, onSearchChange, deviceTypeFilter, onTypeFilterChange, submitting,
 }: Props) {
-  return (
-    <section className="grid gap-5 lg:grid-cols-[380px_1fr]">
-      {/* Add Device Form */}
-      <form className="rounded-2xl border border-cyan-200/10 bg-slate-900/50 p-5" onSubmit={onCreateDevice}>
-        <h2 className="text-lg font-extrabold text-white">Add Device</h2>
-        <p className="mb-4 mt-1 text-sm text-slate-400">Devices are assigned to one of this house's rooms.</p>
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-        <div className="grid gap-3">
-          <label className="grid gap-1.5 text-sm font-semibold text-cyan-100">
-            Device Name
-            <input
-              className={styles.formInput}
-              onChange={(e) => onDeviceFormChange({ ...deviceForm, name: e.target.value })}
-              placeholder="e.g. Main Light"
-              required
-              value={deviceForm.name}
-            />
-          </label>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="grid gap-1.5 text-sm font-semibold text-cyan-100">
-              Type
-              <select
-                className={styles.formInput}
-                onChange={(e) => onDeviceFormChange({ ...deviceForm, device_type: Number(e.target.value) })}
-                required
-                value={deviceForm.device_type}
-              >
-                {DEVICE_TYPE_OPTIONS.map((dt) => (
-                  <option key={dt.value} value={dt.value}>{dt.label}</option>
-                ))}
-              </select>
-            </label>
-            <label className="grid gap-1.5 text-sm font-semibold text-cyan-100">
-              Room
-              <select
-                className={styles.formInput}
-                onChange={(e) => onDeviceFormChange({ ...deviceForm, room_id: e.target.value })}
-                required
-                value={deviceForm.room_id}
-              >
-                {rooms.length === 0 ? <option value="">No rooms</option> : null}
-                {rooms.map((room) => (
-                  <option key={room.id} value={room.id}>{room.name}</option>
-                ))}
-              </select>
-            </label>
-          </div>
+  return (
+    <>
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <p className={`${styles.sectionTitle} text-slate-300`}>Devices</p>
           <button
-            className="mt-1 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 px-4 py-2.5 font-bold text-slate-900 transition hover:-translate-y-0.5"
-            disabled={submitting || rooms.length === 0}
-            type="submit"
+            aria-label="Add device"
+            className={styles.addAction}
+            disabled={rooms.length === 0}
+            onClick={() => setShowCreateModal(true)}
+            type="button"
           >
-            {submitting ? 'Adding...' : 'Add Device'}
+            +
           </button>
         </div>
-      </form>
 
-      {/* Device List with search/filter */}
-      <div>
         {/* Search & Filter Bar */}
-        <div className="mb-4 flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3">
           <div className="relative flex-1 min-w-[200px]">
             <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -118,7 +78,7 @@ export function DevicesTab({
             Showing {filteredDevices.length} of {devices.length} devices
             {(deviceSearch || deviceTypeFilter !== -2) && (
               <button
-                className="ml-2 text-cyan-400 hover:text-cyan-300"
+                className="ml-2 text-emerald-300 hover:text-emerald-300"
                 onClick={() => { onSearchChange(''); onTypeFilterChange(-2); }}
                 type="button"
               >
@@ -160,7 +120,7 @@ export function DevicesTab({
 
                 <div className="mt-3 flex gap-2">
                   <button
-                    className="rounded-lg border border-cyan-200/20 bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition hover:border-cyan-200/40"
+                    className="rounded-lg border border-white/15 bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition hover:border-emerald-300/45"
                     onClick={() => onEditDevice(device)}
                     type="button"
                   >
@@ -178,17 +138,91 @@ export function DevicesTab({
             );
           })}
           {devices.length === 0 && (
-            <p className="col-span-full rounded-xl border border-dashed border-cyan-500/15 p-8 text-center text-sm text-slate-500">
+            <p className="col-span-full rounded-xl border border-dashed border-white/15 p-8 text-center text-sm text-slate-500">
               No devices yet. Add rooms first, then create devices.
             </p>
           )}
           {devices.length > 0 && filteredDevices.length === 0 && (
-            <p className="col-span-full rounded-xl border border-dashed border-cyan-500/15 p-8 text-center text-sm text-slate-500">
+            <p className="col-span-full rounded-xl border border-dashed border-white/15 p-8 text-center text-sm text-slate-500">
               No devices match your search.
             </p>
           )}
         </div>
-      </div>
-    </section>
+      </section>
+
+      {showCreateModal && (
+        <section className={`${styles.modal} fixed inset-0 z-20 grid place-items-center px-4`}>
+          <form
+            className={`${styles.modalCard} w-full max-w-lg p-6 shadow-2xl`}
+            onSubmit={(e) => {
+              onCreateDevice(e);
+              setShowCreateModal(false);
+            }}
+          >
+            <h3 className="text-xl font-extrabold text-white">Add Device</h3>
+            <p className="mb-4 mt-1 text-sm text-slate-400">Devices are assigned to one of this house's rooms.</p>
+
+            <div className="grid gap-3">
+              <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
+                Device Name
+                <input
+                  className={styles.formInput}
+                  onChange={(e) => onDeviceFormChange({ ...deviceForm, name: e.target.value })}
+                  placeholder="e.g. Main Light"
+                  required
+                  value={deviceForm.name}
+                />
+              </label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
+                  Type
+                  <select
+                    className={styles.formInput}
+                    onChange={(e) => onDeviceFormChange({ ...deviceForm, device_type: Number(e.target.value) })}
+                    required
+                    value={deviceForm.device_type}
+                  >
+                    {DEVICE_TYPE_OPTIONS.map((dt) => (
+                      <option key={dt.value} value={dt.value}>{dt.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
+                  Room
+                  <select
+                    className={styles.formInput}
+                    onChange={(e) => onDeviceFormChange({ ...deviceForm, room_id: e.target.value })}
+                    required
+                    value={deviceForm.room_id}
+                  >
+                    {rooms.length === 0 ? <option value="">No rooms</option> : null}
+                    {rooms.map((room) => (
+                      <option key={room.id} value={room.id}>{room.name}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-5 flex gap-2">
+              <button
+                className="rounded-xl bg-gradient-to-r from-emerald-400 to-lime-300 px-4 py-2.5 text-sm font-bold text-slate-900"
+                disabled={submitting || rooms.length === 0}
+                type="submit"
+              >
+                {submitting ? 'Adding...' : 'Add Device'}
+              </button>
+              <button
+                className="rounded-xl border border-white/20 bg-black/35 px-4 py-2.5 text-sm font-semibold text-slate-300"
+                onClick={() => setShowCreateModal(false)}
+                type="button"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
+    </>
   );
 }

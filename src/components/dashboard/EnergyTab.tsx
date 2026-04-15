@@ -32,7 +32,7 @@ export function EnergyTab({ houseId }: EnergyTabProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
       </div>
     );
   }
@@ -86,8 +86,8 @@ export function EnergyTab({ houseId }: EnergyTabProps) {
 
         <article className={`${styles.statCard} relative p-4`}>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/15">
-              <svg className="h-5 w-5 text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15">
+              <svg className="h-5 w-5 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
@@ -109,7 +109,7 @@ export function EnergyTab({ houseId }: EnergyTabProps) {
         <div className="mt-3 space-y-2">
           {sorted.map((device: DeviceEnergy) => (
             <div
-              className="rounded-xl border border-cyan-200/10 bg-slate-900/40 px-4 py-3"
+              className="rounded-xl border border-white/10 bg-slate-900/40 px-4 py-3"
               key={device.device_id}
             >
               <div className="flex items-center justify-between">
@@ -131,7 +131,7 @@ export function EnergyTab({ houseId }: EnergyTabProps) {
                   style={{
                     width: `${(device.estimated_watts / maxWatts) * 100}%`,
                     background: device.is_on
-                      ? 'linear-gradient(90deg, #06b6d4, #f59e0b)'
+                      ? 'linear-gradient(90deg, #10b981, #f59e0b)'
                       : 'rgb(71, 85, 105)',
                   }}
                 />
@@ -139,7 +139,7 @@ export function EnergyTab({ houseId }: EnergyTabProps) {
             </div>
           ))}
           {data.devices.length === 0 && (
-            <p className="rounded-xl border border-dashed border-cyan-500/15 p-8 text-center text-sm text-slate-500">
+            <p className="rounded-xl border border-dashed border-white/15 p-8 text-center text-sm text-slate-500">
               No devices in this house yet.
             </p>
           )}

@@ -16,7 +16,7 @@ export function EditRoomModal({ room, onChange, onSubmit, onClose }: Props) {
       <form className={`${styles.modalCard} w-full max-w-md p-6 shadow-2xl`} onSubmit={onSubmit}>
         <h3 className="text-xl font-extrabold text-white">Update Room</h3>
         <div className="mt-4 grid gap-3">
-          <label className="grid gap-1.5 text-sm font-semibold text-cyan-100">
+          <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
             Name
             <input
               className={styles.formInput}
@@ -24,7 +24,7 @@ export function EditRoomModal({ room, onChange, onSubmit, onClose }: Props) {
               value={room.name}
             />
           </label>
-          <label className="grid gap-1.5 text-sm font-semibold text-cyan-100">
+          <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
             Floor
             <select
               className={styles.formInput}
@@ -38,7 +38,7 @@ export function EditRoomModal({ room, onChange, onSubmit, onClose }: Props) {
           </label>
         </div>
         <div className="mt-5 flex gap-2">
-          <button className="rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 px-4 py-2.5 text-sm font-bold text-slate-900" type="submit">
+          <button className="rounded-xl bg-gradient-to-r from-emerald-400 to-lime-300 px-4 py-2.5 text-sm font-bold text-slate-900" type="submit">
             Save
           </button>
           <button

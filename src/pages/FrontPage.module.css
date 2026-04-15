@@ -4,9 +4,9 @@
   left: 0;
   right: 0;
   z-index: 50;
-  background: rgba(10, 25, 41, 0.82);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(34, 211, 238, 0.08);
+  background: rgba(6, 8, 10, 0.78);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .heroGlow {
@@ -19,8 +19,8 @@
   position: absolute;
   inset: -20% -10% auto;
   height: 560px;
-  background: radial-gradient(circle at 50% 30%, rgba(16, 185, 129, 0.2), rgba(34, 211, 238, 0.14) 42%, rgba(0, 0, 0, 0) 68%);
-  filter: blur(6px);
+  background: radial-gradient(circle at 42% 26%, rgba(61, 220, 151, 0.16), rgba(61, 220, 151, 0.05) 38%, rgba(0, 0, 0, 0) 70%);
+  filter: blur(8px);
   z-index: -1;
   pointer-events: none;
 }
@@ -28,11 +28,11 @@
 .deviceFrame {
   position: relative;
   border-radius: 26px;
-  border: 1px solid rgba(125, 211, 252, 0.28);
-  background: linear-gradient(160deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.94));
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: linear-gradient(165deg, rgba(17, 19, 23, 0.88), rgba(8, 9, 11, 0.95));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 18px 42px rgba(3, 8, 20, 0.52);
+    0 20px 44px rgba(0, 0, 0, 0.55);
 }
 
 .deviceFrame::after {
@@ -41,31 +41,45 @@
   inset: auto 18% 10px;
   height: 8px;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(34, 211, 238, 0), rgba(34, 211, 238, 0.55), rgba(34, 211, 238, 0));
+  background: linear-gradient(90deg, rgba(61, 220, 151, 0), rgba(61, 220, 151, 0.52), rgba(61, 220, 151, 0));
 }
 
 .gridPattern {
+  position: relative;
+  background-color: #020407;
   background-image:
-    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
-  background-size: 32px 32px;
+    linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.84) 72%, rgba(0, 0, 0, 0.92) 100%),
+    radial-gradient(80% 68% at 16% 1%, rgba(248, 250, 252, 0.12), rgba(248, 250, 252, 0) 66%),
+    radial-gradient(72% 66% at 84% 11%, rgba(61, 220, 151, 0.09), rgba(61, 220, 151, 0) 70%),
+    url('/landingpage_bg.jpg');
+  background-size: auto, auto, auto, cover;
+  background-position: center top, center top, center top, center;
+  background-repeat: no-repeat;
+  background-attachment: scroll, scroll, scroll, fixed;
+}
+
+@media (max-width: 900px) {
+  .gridPattern {
+    background-attachment: scroll;
+    background-position: center top;
+  }
 }
 
 .featureCard {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.5));
-  border: 1px solid rgba(34, 211, 238, 0.12);
+  background: linear-gradient(135deg, rgba(18, 20, 24, 0.84), rgba(28, 31, 36, 0.58));
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   transition: all 0.3s ease;
 }
 
 .featureCard:hover {
-  border-color: rgba(34, 211, 238, 0.3);
+  border-color: rgba(61, 220, 151, 0.35);
   transform: translateY(-4px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.44);
 }
 
 .statNumber {
-  background: linear-gradient(135deg, #22d3ee, #10b981);
+  background: linear-gradient(135deg, #7cf0be, #def7ea);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -73,12 +87,13 @@
 
 .ctaSection {
   position: relative;
+  overflow: hidden;
 }
 
 .ctaSection::before {
   content: '';
   position: absolute;
-  inset: -40% -20%;
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.1), transparent 70%);
+  inset: 0 -20% -40%;
+  background: radial-gradient(circle, rgba(61, 220, 151, 0.12), transparent 72%);
   pointer-events: none;
 }

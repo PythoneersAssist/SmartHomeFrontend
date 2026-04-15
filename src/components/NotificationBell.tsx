@@ -92,12 +92,12 @@ export function NotificationBell() {
     <div className="relative" ref={panelRef}>
       {/* Bell Button */}
       <button
-        className="relative flex h-9 w-9 items-center justify-center rounded-full bg-cyan-500/15 transition hover:bg-cyan-500/25"
+        className="relative flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/15 transition hover:bg-emerald-500/25"
         onClick={() => void handleOpen()}
         type="button"
         aria-label="Notifications"
       >
-        <svg className="h-5 w-5 text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <svg className="h-5 w-5 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
         </svg>
         {unreadCount > 0 && (
@@ -109,13 +109,13 @@ export function NotificationBell() {
 
       {/* Dropdown Panel */}
       {open && (
-        <div className="absolute right-0 top-12 z-50 w-80 rounded-2xl border border-cyan-200/15 bg-[#0d1b2a] shadow-2xl">
+        <div className="absolute right-0 top-12 z-50 w-80 rounded-2xl border border-white/12 bg-[#0b0f14] shadow-2xl">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-cyan-500/10 px-4 py-3">
+          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
             <h3 className="text-sm font-bold text-white">Notifications</h3>
             {unreadCount > 0 && (
               <button
-                className="text-xs font-semibold text-cyan-400 transition hover:text-cyan-300"
+                className="text-xs font-semibold text-emerald-300 transition hover:text-emerald-300"
                 onClick={() => void handleMarkAllRead()}
                 type="button"
               >
@@ -128,22 +128,22 @@ export function NotificationBell() {
           <div className="max-h-80 overflow-y-auto">
             {loading ? (
               <div className="flex justify-center py-8">
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
               </div>
             ) : notifications.length === 0 ? (
               <p className="py-8 text-center text-sm text-slate-500">No notifications yet</p>
             ) : (
               notifications.map((n) => (
                 <div
-                  className={`flex items-start gap-3 border-b border-cyan-500/5 px-4 py-3 transition ${
-                    n.is_read ? 'opacity-60' : 'bg-cyan-500/5'
+                  className={`flex items-start gap-3 border-b border-white/10 px-4 py-3 transition ${
+                    n.is_read ? 'opacity-60' : 'bg-emerald-500/8'
                   }`}
                   key={n.id}
                 >
                   {/* Unread dot */}
                   <div className="mt-1.5 flex-shrink-0">
                     <span
-                      className={`block h-2 w-2 rounded-full ${n.is_read ? 'bg-slate-600' : 'bg-cyan-400'}`}
+                      className={`block h-2 w-2 rounded-full ${n.is_read ? 'bg-slate-600' : 'bg-emerald-400'}`}
                     />
                   </div>
 
@@ -158,7 +158,7 @@ export function NotificationBell() {
                   <div className="flex flex-shrink-0 gap-1">
                     {!n.is_read && (
                       <button
-                        className="rounded p-1 text-slate-500 transition hover:text-cyan-300"
+                        className="rounded p-1 text-slate-500 transition hover:text-emerald-300"
                         onClick={() => void handleMarkRead(n.id)}
                         title="Mark as read"
                         type="button"

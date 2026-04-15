@@ -1,13 +1,38 @@
-.gridGlow {
-  position: relative;
+.pageShell {
+  background-color: #020407;
+  background-image:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.54) 0%, rgba(0, 0, 0, 0.82) 72%, rgba(0, 0, 0, 0.9) 100%),
+    radial-gradient(82% 72% at 14% 3%, rgba(248, 250, 252, 0.12), rgba(248, 250, 252, 0) 66%),
+    radial-gradient(72% 66% at 86% 10%, rgba(61, 220, 151, 0.1), rgba(61, 220, 151, 0) 70%),
+    url('/landingpage_bg.jpg');
+  background-size: auto, auto, auto, cover;
+  background-position: center top, center top, center top, center;
+  background-repeat: no-repeat;
+  background-attachment: scroll, scroll, scroll, fixed;
 }
 
-.gridGlow::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
+@media (max-width: 900px) {
+  .pageShell {
+    background-attachment: scroll;
+  }
+}
+
+.formCard {
   border-radius: 24px;
-  background: linear-gradient(135deg, rgba(8, 145, 178, 0.25), rgba(16, 185, 129, 0.2));
-  z-index: -1;
-  filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(160deg, rgba(15, 17, 21, 0.78), rgba(8, 9, 11, 0.9));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 20px 44px rgba(0, 0, 0, 0.52);
+  backdrop-filter: blur(14px);
+}
+
+.orb {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(61, 220, 151, 0.2) 0%, rgba(15, 23, 42, 0) 72%);
+  filter: blur(6px);
+  pointer-events: none;
 }

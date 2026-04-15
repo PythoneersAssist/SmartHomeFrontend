@@ -59,13 +59,13 @@ export function OverviewTab({ rooms, devices, roomMap, expandedRoomId, onExpandR
             return (
               <div key={room.id}>
                 <button
-                  className={`${styles.roomCard} w-full p-4 text-left ${isExpanded ? 'ring-1 ring-cyan-400/40' : ''}`}
+                  className={`${styles.roomCard} w-full p-4 text-left ${isExpanded ? 'ring-1 ring-emerald-400/40' : ''}`}
                   onClick={() => onExpandRoom(isExpanded ? null : room.id)}
                   type="button"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-500/12">
-                      <svg className="h-5 w-5 text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/12">
+                      <svg className="h-5 w-5 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                       </svg>
                     </div>
@@ -86,7 +86,7 @@ export function OverviewTab({ rooms, devices, roomMap, expandedRoomId, onExpandR
                 {isExpanded && (
                   <div className="mt-2 grid gap-2 pl-2 animate-[fadeInUp_0.2s_ease-out] sm:grid-cols-2">
                     {roomDevices.length === 0 ? (
-                      <p className="col-span-full rounded-lg border border-dashed border-cyan-500/10 p-3 text-center text-xs text-slate-500">
+                      <p className="col-span-full rounded-lg border border-dashed border-white/10 p-3 text-center text-xs text-slate-500">
                         No devices in this room.
                       </p>
                     ) : roomDevices.map((device) => {
@@ -124,7 +124,7 @@ export function OverviewTab({ rooms, devices, roomMap, expandedRoomId, onExpandR
             );
           })}
           {rooms.length === 0 && (
-            <p className="col-span-full rounded-xl border border-dashed border-cyan-500/15 p-6 text-center text-sm text-slate-500">
+            <p className="col-span-full rounded-xl border border-dashed border-white/15 p-6 text-center text-sm text-slate-500">
               No rooms yet. Go to the Rooms tab to add one.
             </p>
           )}
@@ -174,7 +174,7 @@ export function OverviewTab({ rooms, devices, roomMap, expandedRoomId, onExpandR
             );
           })}
           {devices.length === 0 && (
-            <p className="col-span-full rounded-xl border border-dashed border-cyan-500/15 p-6 text-center text-sm text-slate-500">
+            <p className="col-span-full rounded-xl border border-dashed border-white/15 p-6 text-center text-sm text-slate-500">
               No devices yet. Go to the Devices tab to add one.
             </p>
           )}

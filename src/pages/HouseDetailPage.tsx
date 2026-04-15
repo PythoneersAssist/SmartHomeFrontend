@@ -268,7 +268,7 @@ export function HouseDetailPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#060d19]">
+    <div className="appShellBackground flex h-screen overflow-hidden">
       {/* ── Sidebar ── */}
       <DashboardSidebar
         activeTab={activeTab}
@@ -281,20 +281,20 @@ export function HouseDetailPage() {
       {/* ── Main Area ── */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top Header */}
-        <header className="flex items-center justify-between border-b border-cyan-500/10 bg-[#0a1628]/80 px-4 py-3 backdrop-blur md:px-6">
+        <header className="flex items-center justify-between border-b border-white/10 bg-[#0b0f14]/80 px-4 py-3 backdrop-blur md:px-6">
           <div className="flex items-center gap-3">
             <button
-              className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-500/10 md:hidden"
+              className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/12 md:hidden"
               onClick={() => setMobileMenuOpen(true)}
               type="button"
               aria-label="Open menu"
             >
-              <svg className="h-5 w-5 text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-5 w-5 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
             <h1 className="hidden text-base font-bold text-white md:block">
-              SMART HOME DASHBOARD <span className="text-cyan-400">| {house.name.toUpperCase()}</span>
+              SMART HOME DASHBOARD <span className="text-emerald-300">| {house.name.toUpperCase()}</span>
             </h1>
             <h1 className="text-sm font-bold text-white md:hidden truncate max-w-[180px]">
               {house.name}
@@ -311,8 +311,8 @@ export function HouseDetailPage() {
               </p>
             </div>
             <NotificationBell />
-            <Link to="/profile" className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-500/15 transition hover:bg-cyan-500/25">
-              <span className="text-sm font-bold text-cyan-300">{user?.username?.[0]?.toUpperCase() ?? '?'}</span>
+            <Link to="/profile" className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/15 transition hover:bg-emerald-500/25">
+              <span className="text-sm font-bold text-emerald-300">{user?.username?.[0]?.toUpperCase() ?? '?'}</span>
             </Link>
           </div>
         </header>
@@ -325,7 +325,7 @@ export function HouseDetailPage() {
 
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
             </div>
           ) : (
             <div key={activeTab} className="animate-[fadeInUp_0.3s_ease-out]">

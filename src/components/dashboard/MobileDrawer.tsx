@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { DashboardTab } from './types';
-import { NAV_ITEMS } from './DashboardSidebar';
+import { NAV_ITEMS } from './navItems';
 import styles from './dashboard.module.css';
 
 type Props = {
@@ -23,11 +23,11 @@ export function MobileDrawer({ open, activeTab, onTabChange, houseName, onClose,
         onClick={onClose}
       />
       {/* Drawer */}
-      <aside className="absolute left-0 top-0 bottom-0 w-64 bg-[#0d1b2a] border-r border-cyan-500/10 flex flex-col animate-[slideInLeft_0.2s_ease-out]">
+      <aside className="absolute left-0 top-0 bottom-0 w-64 bg-[#0b0f14] border-r border-white/10 flex flex-col animate-[slideInLeft_0.2s_ease-out]">
         {/* Logo */}
         <div className="flex items-center justify-between px-5 pt-5 pb-2">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-400 to-emerald-400">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-lime-300">
               <svg className="h-4.5 w-4.5 text-slate-950" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
               </svg>
@@ -58,18 +58,18 @@ export function MobileDrawer({ open, activeTab, onTabChange, houseName, onClose,
               onClick={() => { onTabChange(item.id); onClose(); }}
               type="button"
             >
-              <span className={activeTab === item.id ? 'text-cyan-300' : 'text-slate-500'}>{item.icon}</span>
-              <span className={activeTab === item.id ? 'font-semibold text-cyan-200' : 'text-slate-400'}>{item.label}</span>
+              <span className={activeTab === item.id ? 'text-emerald-300' : 'text-slate-500'}>{item.icon}</span>
+              <span className={activeTab === item.id ? 'font-semibold text-emerald-200' : 'text-slate-400'}>{item.label}</span>
             </button>
           ))}
         </nav>
 
         {/* Bottom links */}
-        <div className="border-t border-cyan-500/10 px-4 py-4 space-y-2">
-          <Link className="block text-sm text-slate-400 transition hover:text-cyan-300" to="/houses" onClick={onClose}>
+        <div className="border-t border-white/10 px-4 py-4 space-y-2">
+          <Link className="block text-sm text-slate-400 transition hover:text-emerald-300" to="/houses" onClick={onClose}>
             &larr; All Houses
           </Link>
-          <Link className="block text-sm text-slate-400 transition hover:text-cyan-300" to="/profile" onClick={onClose}>
+          <Link className="block text-sm text-slate-400 transition hover:text-emerald-300" to="/profile" onClick={onClose}>
             Profile
           </Link>
           <button

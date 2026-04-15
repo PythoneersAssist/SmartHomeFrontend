@@ -18,6 +18,25 @@ body {
 	margin: 0;
 }
 
+.appShellBackground {
+	background-color: #020407;
+	background-image:
+		linear-gradient(180deg, rgba(0, 0, 0, 0.54) 0%, rgba(0, 0, 0, 0.82) 72%, rgba(0, 0, 0, 0.9) 100%),
+		radial-gradient(82% 72% at 14% 3%, rgba(248, 250, 252, 0.12), rgba(248, 250, 252, 0) 66%),
+		radial-gradient(72% 66% at 86% 10%, rgba(61, 220, 151, 0.1), rgba(61, 220, 151, 0) 70%),
+		url('/landingpage_bg.jpg');
+	background-size: auto, auto, auto, cover;
+	background-position: center top, center top, center top, center;
+	background-repeat: no-repeat;
+	background-attachment: scroll, scroll, scroll, fixed;
+}
+
+@media (max-width: 900px) {
+	.appShellBackground {
+		background-attachment: scroll;
+	}
+}
+
 h1,
 h2,
 h3 {

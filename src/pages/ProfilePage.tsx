@@ -81,26 +81,26 @@ export function ProfilePage() {
     : '—';
 
   return (
-    <main className="relative min-h-screen bg-[#060d19] px-4 py-6">
+    <main className="appShellBackground relative min-h-screen px-4 py-6">
       <div className={styles.pageGlow} />
 
       <div className="relative z-10 mx-auto w-full max-w-2xl space-y-5">
         {/* Header */}
-        <header className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border border-cyan-200/10 bg-slate-900/50 p-5 backdrop-blur">
+        <header className={`${styles.topCard} flex flex-wrap items-start justify-between gap-4 rounded-2xl p-5 backdrop-blur`}>
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-400">The Smart Home</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-300">The Smart Home</p>
             <h1 className="mt-1 text-2xl font-extrabold text-white md:text-3xl">Profile</h1>
             <p className="mt-1 text-sm text-slate-400">View and update your account details.</p>
           </div>
           <div className="flex items-center gap-3">
             <Link
-              className="rounded-xl border border-cyan-200/20 bg-slate-800/60 px-3 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-200/40"
+              className="rounded-xl border border-white/15 bg-slate-800/60 px-3 py-2 text-sm font-semibold text-emerald-200 transition hover:border-emerald-300/45"
               to="/houses"
             >
               &larr; Houses
             </Link>
             <button
-              className="rounded-xl border border-cyan-200/20 bg-slate-800/60 px-3 py-2 text-sm font-semibold text-slate-300 transition hover:text-rose-300"
+              className="rounded-xl border border-white/15 bg-slate-800/60 px-3 py-2 text-sm font-semibold text-slate-300 transition hover:text-rose-300"
               onClick={() => logout()}
               type="button"
             >
@@ -115,13 +115,13 @@ export function ProfilePage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
           </div>
         ) : profile ? (
           <>
             {/* Avatar + name */}
             <section className={`${styles.card} flex items-center gap-5 p-6`}>
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-emerald-400">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-lime-300">
                 <span className="text-2xl font-black text-slate-950">
                   {profile.username?.[0]?.toUpperCase() ?? '?'}
                 </span>
@@ -134,7 +134,7 @@ export function ProfilePage() {
             </section>
 
             {/* Info rows */}
-            <section className={`${styles.card} divide-y divide-cyan-500/10 p-0 overflow-hidden`}>
+            <section className={`${styles.card} divide-y divide-white/10 p-0 overflow-hidden`}>
               {/* Username row */}
               <div className="flex items-center justify-between px-6 py-4">
                 <div>
@@ -142,7 +142,7 @@ export function ProfilePage() {
                   <p className="mt-0.5 text-sm font-semibold text-white">{profile.username}</p>
                 </div>
                 <button
-                  className="rounded-lg border border-cyan-200/20 bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition hover:border-cyan-200/40"
+                  className="rounded-lg border border-white/15 bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition hover:border-emerald-300/45"
                   onClick={() => openEdit('username')}
                   type="button"
                 >
@@ -157,7 +157,7 @@ export function ProfilePage() {
                   <p className="mt-0.5 text-sm font-semibold text-white">{profile.email}</p>
                 </div>
                 <button
-                  className="rounded-lg border border-cyan-200/20 bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition hover:border-cyan-200/40"
+                  className="rounded-lg border border-white/15 bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition hover:border-emerald-300/45"
                   onClick={() => openEdit('email')}
                   type="button"
                 >
@@ -172,7 +172,7 @@ export function ProfilePage() {
                   <p className="mt-0.5 text-sm text-slate-500">••••••••</p>
                 </div>
                 <button
-                  className="rounded-lg border border-cyan-200/20 bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition hover:border-cyan-200/40"
+                  className="rounded-lg border border-white/15 bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition hover:border-emerald-300/45"
                   onClick={() => openEdit('password')}
                   type="button"
                 >
@@ -188,7 +188,7 @@ export function ProfilePage() {
       {editField ? (
         <section className="fixed inset-0 z-20 grid place-items-center bg-black/60 px-4 backdrop-blur-sm">
           <form
-            className="w-full max-w-md rounded-2xl border border-cyan-200/10 bg-slate-900/95 p-6 shadow-2xl"
+            className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900/95 p-6 shadow-2xl"
             onSubmit={handleSave}
           >
             <h3 className="text-xl font-extrabold text-white">
@@ -200,7 +200,7 @@ export function ProfilePage() {
             ) : null}
 
             <div className="mt-4 grid gap-3">
-              <label className="grid gap-1.5 text-sm font-semibold text-cyan-100">
+              <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
                 {editField === 'password' ? 'New Password' : editField.charAt(0).toUpperCase() + editField.slice(1)}
                 <input
                   autoFocus
@@ -213,7 +213,7 @@ export function ProfilePage() {
               </label>
 
               {editField === 'password' ? (
-                <label className="grid gap-1.5 text-sm font-semibold text-cyan-100">
+                <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
                   Confirm Password
                   <input
                     className={styles.formInput}
@@ -228,14 +228,14 @@ export function ProfilePage() {
 
             <div className="mt-5 flex gap-2">
               <button
-                className="rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 px-4 py-2.5 text-sm font-bold text-slate-900"
+                className="rounded-xl bg-gradient-to-r from-emerald-400 to-lime-300 px-4 py-2.5 text-sm font-bold text-slate-900"
                 disabled={submitting}
                 type="submit"
               >
                 {submitting ? 'Saving...' : 'Save'}
               </button>
               <button
-                className="rounded-xl border border-slate-600 bg-slate-800/60 px-4 py-2.5 text-sm font-semibold text-slate-300"
+                className="rounded-xl border border-white/20 bg-black/35 px-4 py-2.5 text-sm font-semibold text-slate-300"
                 onClick={() => { setEditField(null); setError(null); }}
                 type="button"
               >

@@ -27,7 +27,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const session = localData.getSession();
     if (!session) {
-      setLoading(false);
       return;
     }
 
