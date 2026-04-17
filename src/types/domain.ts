@@ -55,6 +55,7 @@ export type DeviceCreateInput = {
 export type DeviceUpdateInput = {
   device_id: string;
   name?: string;
+  room_id?: string;
   parameters?: Record<string, unknown>;
 };
 

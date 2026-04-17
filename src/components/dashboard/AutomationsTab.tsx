@@ -13,6 +13,137 @@ type AutomationsTabProps = {
 
 const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
+function isTimeTrigger(triggerType: number): boolean {
+  return triggerType === 0;
+}
+
+function isThresholdTrigger(triggerType: number): boolean {
+  return triggerType === 1 || triggerType === 2;
+}
+
+function normalizeTimeTriggerValue(value: string): string {
+  const raw = value.trim().replace(/\./g, ':');
+  const parts = raw.split(':');
+  if (parts.length < 2 || parts.length > 3) {
+    return raw;
+  }
+
+  const [hourPart, minutePart, secondPart] = parts;
+  if (!/^\d{1,2}$/.test(hourPart) || !/^\d{1,2}$/.test(minutePart)) {
+    return raw;
+  }
+  if (secondPart !== undefined && !/^\d{1,2}$/.test(secondPart)) {
+    return raw;
+  }
+
+  const hour = Number(hourPart);
+  const minute = Number(minutePart);
+  const second = secondPart === undefined ? undefined : Number(secondPart);
+
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    return raw;
+  }
+  if (second !== undefined && (second < 0 || second > 59)) {
+    return raw;
+  }
+
+  const hh = String(hour).padStart(2, '0');
+  const mm = String(minute).padStart(2, '0');
+  if (second === undefined) {
+    return `${hh}:${mm}`;
+  }
+
+  return `${hh}:${mm}:${String(second).padStart(2, '0')}`;
+}
+
+type ParsedClock = {
+  hour: number;
+  minute: number;
+  second: number;
+  hasSeconds: boolean;
+};
+
+function parseClock(value: string): ParsedClock | null {
+  const normalized = normalizeTimeTriggerValue(value);
+  const parts = normalized.split(':');
+  if (parts.length !== 2 && parts.length !== 3) {
+    return null;
+  }
+
+  const hour = Number(parts[0]);
+  const minute = Number(parts[1]);
+  const hasSeconds = parts.length === 3;
+  const second = hasSeconds ? Number(parts[2]) : 0;
+
+  if ([hour, minute, second].some((part) => Number.isNaN(part))) {
+    return null;
+  }
+
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 || second > 59) {
+    return null;
+  }
+
+  return {
+    hour,
+    minute,
+    second,
+    hasSeconds,
+  };
+}
+
+function localClockToUtcClock(value: string): string {
+  const parsed = parseClock(value);
+  if (!parsed) {
+    return normalizeTimeTriggerValue(value);
+  }
+
+  const now = new Date();
+  const localDate = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    parsed.hour,
+    parsed.minute,
+    parsed.second,
+    0,
+  );
+
+  const hh = String(localDate.getUTCHours()).padStart(2, '0');
+  const mm = String(localDate.getUTCMinutes()).padStart(2, '0');
+  const ss = String(localDate.getUTCSeconds()).padStart(2, '0');
+
+  return parsed.hasSeconds ? `${hh}:${mm}:${ss}` : `${hh}:${mm}`;
+}
+
+function utcClockToLocalClock(value: string): string {
+  const parsed = parseClock(value);
+  if (!parsed) {
+    return normalizeTimeTriggerValue(value);
+  }
+
+  const now = new Date();
+  const utcDate = new Date(Date.UTC(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    parsed.hour,
+    parsed.minute,
+    parsed.second,
+    0,
+  ));
+
+  const hh = String(utcDate.getHours()).padStart(2, '0');
+  const mm = String(utcDate.getMinutes()).padStart(2, '0');
+  const ss = String(utcDate.getSeconds()).padStart(2, '0');
+
+  return parsed.hasSeconds ? `${hh}:${mm}:${ss}` : `${hh}:${mm}`;
+}
+
+function isValidTimeTriggerValue(value: string): boolean {
+  const normalized = normalizeTimeTriggerValue(value);
+  return /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(normalized);
+}
+
 export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +169,19 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
     try {
       const data = await backendApi.getAutomations();
       const houseDeviceIds = new Set(houseDevices.map((d) => d.id));
-      setAutomations(data.filter((a) => houseDeviceIds.has(a.device_id)));
+      setAutomations(
+        data
+          .filter((a) => houseDeviceIds.has(a.device_id))
+          .map((a) => {
+            if (isTimeTrigger(a.trigger_type) && a.trigger_value) {
+              return {
+                ...a,
+                trigger_value: utcClockToLocalClock(a.trigger_value),
+              };
+            }
+            return a;
+          }),
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load automations');
     } finally {
@@ -70,10 +213,31 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
     setSubmitting(true);
     setError(null);
     try {
+      const normalizedCreateTime = isTimeTrigger(formTriggerType)
+        ? normalizeTimeTriggerValue(formTriggerValue)
+        : formTriggerValue.trim();
+      const createPayloadTime = isTimeTrigger(formTriggerType)
+        ? localClockToUtcClock(normalizedCreateTime)
+        : normalizedCreateTime;
+
+      if (isTimeTrigger(formTriggerType) && !isValidTimeTriggerValue(normalizedCreateTime)) {
+        setError('Time automations require trigger value in HH:MM or HH:MM:SS format.');
+        return;
+      }
+
+      if (isThresholdTrigger(formTriggerType) && formTriggerValue.trim().length > 0 && Number.isNaN(Number(formTriggerValue))) {
+        setError('Threshold value must be numeric for temperature or lux automations.');
+        return;
+      }
+
+      if (isTimeTrigger(formTriggerType) && normalizedCreateTime !== formTriggerValue) {
+        setFormTriggerValue(normalizedCreateTime);
+      }
+
       const payload: AutomationCreateInput = {
         name: formName,
         trigger_type: formTriggerType,
-        trigger_value: formTriggerValue || undefined,
+        trigger_value: createPayloadTime || undefined,
         execution_day: formExecutionDay ? Number(formExecutionDay) : undefined,
         device_id: formDeviceId,
       };
@@ -95,11 +259,33 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
     setSubmitting(true);
     setError(null);
     try {
+      const editingValue = editing.trigger_value?.trim() ?? '';
+      const normalizedEditTime = isTimeTrigger(editing.trigger_type)
+        ? normalizeTimeTriggerValue(editingValue)
+        : editingValue;
+      const updatePayloadTime = isTimeTrigger(editing.trigger_type)
+        ? localClockToUtcClock(normalizedEditTime)
+        : normalizedEditTime;
+
+      if (isTimeTrigger(editing.trigger_type) && !isValidTimeTriggerValue(normalizedEditTime)) {
+        setError('Time automations require trigger value in HH:MM or HH:MM:SS format.');
+        return;
+      }
+
+      if (isThresholdTrigger(editing.trigger_type) && editingValue.length > 0 && Number.isNaN(Number(editingValue))) {
+        setError('Threshold value must be numeric for temperature or lux automations.');
+        return;
+      }
+
+      if (isTimeTrigger(editing.trigger_type) && normalizedEditTime !== editingValue) {
+        setEditing((prev) => prev ? { ...prev, trigger_value: normalizedEditTime } : prev);
+      }
+
       await backendApi.updateAutomation({
         automation_id: editing.id,
         name: editing.name,
         trigger_type: editing.trigger_type,
-        trigger_value: editing.trigger_value ?? undefined,
+        trigger_value: updatePayloadTime || undefined,
         execution_day: editing.execution_day ?? undefined,
       });
       setEditing(null);
@@ -263,7 +449,14 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
                   Trigger
                   <select
                     className={styles.formInput}
-                    onChange={(e) => setFormTriggerType(Number(e.target.value))}
+                    onChange={(e) => {
+                      const nextType = Number(e.target.value);
+                      setFormTriggerType(nextType);
+                      setFormTriggerValue('');
+                      if (!isTimeTrigger(nextType)) {
+                        setFormExecutionDay('');
+                      }
+                    }}
                     required
                     value={formTriggerType}
                   >
@@ -278,15 +471,24 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
                     className={styles.formInput}
                     onChange={(e) => setFormTriggerValue(e.target.value)}
                     placeholder={getTriggerPlaceholder(formTriggerType)}
+                    required={isTimeTrigger(formTriggerType)}
+                    step={isTimeTrigger(formTriggerType) ? 1 : undefined}
+                    type={isTimeTrigger(formTriggerType) ? 'time' : isThresholdTrigger(formTriggerType) ? 'number' : 'text'}
                     value={formTriggerValue}
                   />
                 </label>
               </div>
+              <p className="text-xs text-slate-500">
+                {isTimeTrigger(formTriggerType)
+                  ? 'Enter local time (HH:MM or HH:MM:SS). It is converted to UTC automatically when saved.'
+                  : 'Temperature and lux triggers are checked when device parameters are updated.'}
+              </p>
               <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
                 Day of Week (optional)
                 <select
                   className={styles.formInput}
                   onChange={(e) => setFormExecutionDay(e.target.value)}
+                  disabled={!isTimeTrigger(formTriggerType)}
                   value={formExecutionDay}
                 >
                   <option value="">Every day</option>
@@ -336,7 +538,21 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
                   Trigger
                   <select
                     className={styles.formInput}
-                    onChange={(e) => setEditing((prev) => prev ? { ...prev, trigger_type: Number(e.target.value) } : prev)}
+                    onChange={(e) => {
+                      const nextType = Number(e.target.value);
+                      setEditing((prev) => {
+                        if (!prev) {
+                          return prev;
+                        }
+
+                        return {
+                          ...prev,
+                          trigger_type: nextType,
+                          trigger_value: '',
+                          execution_day: isTimeTrigger(nextType) ? prev.execution_day : null,
+                        };
+                      });
+                    }}
                     value={editing.trigger_type}
                   >
                     {AUTOMATION_TRIGGER_OPTIONS.map((t) => (
@@ -350,15 +566,24 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
                     className={styles.formInput}
                     onChange={(e) => setEditing((prev) => prev ? { ...prev, trigger_value: e.target.value } : prev)}
                     placeholder={getTriggerPlaceholder(editing.trigger_type)}
+                    required={isTimeTrigger(editing.trigger_type)}
+                    step={isTimeTrigger(editing.trigger_type) ? 1 : undefined}
+                    type={isTimeTrigger(editing.trigger_type) ? 'time' : isThresholdTrigger(editing.trigger_type) ? 'number' : 'text'}
                     value={editing.trigger_value ?? ''}
                   />
                 </label>
               </div>
+              <p className="text-xs text-slate-500">
+                {isTimeTrigger(editing.trigger_type)
+                  ? 'Enter local time (HH:MM or HH:MM:SS). It is converted to UTC automatically when saved.'
+                  : 'Temperature and lux triggers are checked when device parameters are updated.'}
+              </p>
               <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
                 Day of Week
                 <select
                   className={styles.formInput}
                   onChange={(e) => setEditing((prev) => prev ? { ...prev, execution_day: e.target.value ? Number(e.target.value) : null } : prev)}
+                  disabled={!isTimeTrigger(editing.trigger_type)}
                   value={editing.execution_day ?? ''}
                 >
                   <option value="">Every day</option>

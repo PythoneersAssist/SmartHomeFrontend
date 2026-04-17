@@ -1,6 +1,5 @@
 import type { Device, Room } from '../../types/domain';
-import { DEVICE_TYPE_LABELS } from '../../types/domain';
-import { getDeviceTypeIcon } from './deviceIcons';
+import { DeviceControlCard } from './DeviceControlCard';
 import { getRoomTypeIcon } from './roomIcons';
 import styles from './dashboard.module.css';
 
@@ -11,6 +10,9 @@ type Props = {
   selectedRoomId: string | null;
   onSelectRoom: (roomId: string | null) => void;
   onToggleDevice: (device: Device) => void;
+  onSaveDeviceSettings: (device: Device, parameters: Record<string, unknown>) => Promise<void>;
+  onEditDevice: (device: Device) => void;
+  onDeleteDevice: (deviceId: string, deviceName: string) => void;
   favoriteDeviceIds: Set<string>;
   onToggleFavorite: (deviceId: string) => void;
   submitting: boolean;
@@ -23,6 +25,9 @@ export function OverviewTab({
   selectedRoomId,
   onSelectRoom,
   onToggleDevice,
+  onSaveDeviceSettings,
+  onEditDevice,
+  onDeleteDevice,
   favoriteDeviceIds,
   onToggleFavorite,
   submitting,
@@ -122,58 +127,21 @@ export function OverviewTab({
       </section>
 
       <section className="mt-3">
-        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {visibleDevices.map((device) => {
-            const isOn = Boolean(device.parameters?.status);
-            const isFavorite = favoriteDeviceIds.has(device.id);
-            return (
-              <div className={`${styles.deviceCard} ${isOn ? styles.deviceCardOn : ''} p-4`} key={device.id}>
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-bold text-white">{device.name}</p>
-                    <p className="text-xs text-slate-400">{DEVICE_TYPE_LABELS[device.type] ?? 'Unknown'}</p>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      aria-label={isFavorite ? 'Remove from favourites' : 'Add to favourites'}
-                      className={`rounded-lg border px-2 py-1 transition ${isFavorite ? 'border-amber-300/45 bg-amber-400/15 text-amber-200' : 'border-white/15 bg-black/30 text-slate-400 hover:text-amber-200'}`}
-                      onClick={() => onToggleFavorite(device.id)}
-                      type="button"
-                    >
-                      <svg className="h-3.5 w-3.5" fill={isFavorite ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.012 3.114a1 1 0 00.95.69h3.276c.969 0 1.371 1.24.588 1.81l-2.65 1.925a1 1 0 00-.364 1.118l1.012 3.114c.3.922-.755 1.688-1.538 1.118l-2.65-1.925a1 1 0 00-1.175 0l-2.65 1.925c-.783.57-1.838-.196-1.539-1.118l1.013-3.114a1 1 0 00-.364-1.118L4.223 8.54c-.783-.57-.38-1.81.588-1.81h3.276a1 1 0 00.95-.69l1.012-3.114z" />
-                      </svg>
-                    </button>
-                    {getDeviceTypeIcon(device.type)}
-                  </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-slate-500">Room</p>
-                    <p className="text-sm font-bold text-slate-300">{roomMap.get(device.room_id)?.name ?? '—'}</p>
-                  </div>
-                  <button
-                    className="focus:outline-none"
-                    disabled={submitting}
-                    onClick={() => onToggleDevice(device)}
-                    type="button"
-                  >
-                    <div className={`${styles.toggleTrack} ${isOn ? styles.toggleTrackOn : styles.toggleTrackOff}`}>
-                      <div className={`${styles.toggleKnob} ${isOn ? styles.toggleKnobOn : styles.toggleKnobOff}`} />
-                    </div>
-                  </button>
-                </div>
-
-                <div className="mt-2 flex items-center gap-1.5">
-                  <span className={`h-2 w-2 rounded-full ${isOn ? 'bg-emerald-400' : 'bg-slate-600'}`} />
-                  <span className={`text-xs font-semibold ${isOn ? 'text-emerald-400' : 'text-slate-500'}`}>
-                    {isOn ? 'ON' : 'OFF'}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+        <div className="mt-3 grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {visibleDevices.map((device) => (
+            <DeviceControlCard
+              device={device}
+              isFavorite={favoriteDeviceIds.has(device.id)}
+              key={device.id}
+              onDeleteDevice={onDeleteDevice}
+              onEditDevice={onEditDevice}
+              onSaveDeviceSettings={onSaveDeviceSettings}
+              onToggleDevice={onToggleDevice}
+              onToggleFavorite={onToggleFavorite}
+              roomName={roomMap.get(device.room_id)?.name ?? '—'}
+              submitting={submitting}
+            />
+          ))}
           {devices.length === 0 && (
             <p className="col-span-full rounded-xl border border-dashed border-white/15 p-6 text-center text-sm text-slate-500">
               No devices yet. Go to the Devices tab to add one.

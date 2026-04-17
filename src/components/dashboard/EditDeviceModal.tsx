@@ -1,34 +1,51 @@
 import type { FormEvent } from 'react';
-import type { Device } from '../../types/domain';
+import type { Device, Room } from '../../types/domain';
 import { DEVICE_TYPE_LABELS } from '../../types/domain';
 import { DeviceParamEditor } from './DeviceParamEditor';
 import styles from './dashboard.module.css';
 
 type Props = {
   device: Device;
+  rooms: Room[];
   onChange: (device: Device) => void;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
   onClose: () => void;
+  submitting: boolean;
 };
 
-export function EditDeviceModal({ device, onChange, onSubmit, onClose }: Props) {
+export function EditDeviceModal({ device, rooms, onChange, onSubmit, onClose, submitting }: Props) {
   const params = device.parameters as Record<string, unknown> ?? {};
   const hasStatus = 'status' in params;
 
   return (
     <section className={`${styles.modal} fixed inset-0 z-20 grid place-items-center px-4`}>
       <form className={`${styles.modalCard} w-full max-w-md p-6 shadow-2xl max-h-[85vh] overflow-y-auto`} onSubmit={onSubmit}>
-        <h3 className="text-xl font-extrabold text-white">Update Device</h3>
+        <h3 className="text-xl font-extrabold text-white">Edit Device</h3>
+        <p className="mt-1 text-sm text-slate-400">
+          {device.name} &middot; {DEVICE_TYPE_LABELS[device.type] ?? 'Unknown'}
+        </p>
         <div className="mt-4 grid gap-3">
           <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
-            Name
+            Device Name
             <input
               className={styles.formInput}
               onChange={(e) => onChange({ ...device, name: e.target.value })}
+              required
               value={device.name}
             />
           </label>
-          <p className="text-xs text-slate-400">Type: {DEVICE_TYPE_LABELS[device.type] ?? 'Unknown'}</p>
+          <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
+            Room
+            <select
+              className={styles.formInput}
+              onChange={(e) => onChange({ ...device, room_id: e.target.value })}
+              value={device.room_id}
+            >
+              {rooms.map((room) => (
+                <option key={room.id} value={room.id}>{room.name}</option>
+              ))}
+            </select>
+          </label>
 
           {/* Status toggle */}
           {hasStatus && (
@@ -54,8 +71,8 @@ export function EditDeviceModal({ device, onChange, onSubmit, onClose }: Props) 
           />
         </div>
         <div className="mt-5 flex gap-2">
-          <button className="rounded-xl bg-gradient-to-r from-emerald-400 to-lime-300 px-4 py-2.5 text-sm font-bold text-slate-900" type="submit">
-            Save
+          <button className="rounded-xl bg-gradient-to-r from-emerald-400 to-lime-300 px-4 py-2.5 text-sm font-bold text-slate-900 disabled:opacity-60" disabled={submitting} type="submit">
+            {submitting ? 'Saving...' : 'Save Device'}
           </button>
           <button
             className="rounded-xl border border-slate-600 bg-slate-800/60 px-4 py-2.5 text-sm font-semibold text-slate-300"

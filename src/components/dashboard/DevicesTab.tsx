@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import type { Device, Room } from '../../types/domain';
-import { DEVICE_TYPE_LABELS, DEVICE_TYPE_OPTIONS } from '../../types/domain';
-import { getDeviceTypeIcon } from './deviceIcons';
+import { DEVICE_TYPE_OPTIONS } from '../../types/domain';
+import { DeviceControlCard } from './DeviceControlCard';
 import type { DeviceFormState } from './types';
 import styles from './dashboard.module.css';
 
@@ -15,6 +15,7 @@ type Props = {
   onDeviceFormChange: (form: DeviceFormState) => void;
   onCreateDevice: (e: FormEvent<HTMLFormElement>) => void;
   onEditDevice: (device: Device) => void;
+  onSaveDeviceSettings: (device: Device, parameters: Record<string, unknown>) => Promise<void>;
   onDeleteDevice: (deviceId: string, deviceName: string) => void;
   onToggleDevice: (device: Device) => void;
   deviceSearch: string;
@@ -28,7 +29,7 @@ type Props = {
 
 export function DevicesTab({
   devices, filteredDevices, rooms, roomMap, deviceForm, onDeviceFormChange,
-  onCreateDevice, onEditDevice, onDeleteDevice, onToggleDevice,
+  onCreateDevice, onEditDevice, onSaveDeviceSettings, onDeleteDevice, onToggleDevice,
   deviceSearch, onSearchChange, deviceTypeFilter, onTypeFilterChange, submitting,
   favoriteDeviceIds, onToggleFavorite,
 }: Props) {
@@ -91,68 +92,21 @@ export function DevicesTab({
           </p>
         )}
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          {filteredDevices.map((device) => {
-            const isOn = Boolean(device.parameters?.status);
-            const isFavorite = favoriteDeviceIds.has(device.id);
-            return (
-              <div className={`${styles.deviceCard} ${isOn ? styles.deviceCardOn : ''} p-4`} key={device.id}>
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-bold text-white">{device.name}</p>
-                    <p className="text-xs text-slate-400">{DEVICE_TYPE_LABELS[device.type] ?? 'Unknown'} &middot; {roomMap.get(device.room_id)?.name ?? '—'}</p>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      aria-label={isFavorite ? 'Remove from favourites' : 'Add to favourites'}
-                      className={`rounded-lg border px-2 py-1 transition ${isFavorite ? 'border-amber-300/45 bg-amber-400/15 text-amber-200' : 'border-white/15 bg-black/30 text-slate-400 hover:text-amber-200'}`}
-                      onClick={() => onToggleFavorite(device.id)}
-                      type="button"
-                    >
-                      <svg className="h-3.5 w-3.5" fill={isFavorite ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.012 3.114a1 1 0 00.95.69h3.276c.969 0 1.371 1.24.588 1.81l-2.65 1.925a1 1 0 00-.364 1.118l1.012 3.114c.3.922-.755 1.688-1.538 1.118l-2.65-1.925a1 1 0 00-1.175 0l-2.65 1.925c-.783.57-1.838-.196-1.539-1.118l1.013-3.114a1 1 0 00-.364-1.118L4.223 8.54c-.783-.57-.38-1.81.588-1.81h3.276a1 1 0 00.95-.69l1.012-3.114z" />
-                      </svg>
-                    </button>
-                    {getDeviceTypeIcon(device.type)}
-                  </div>
-                </div>
-
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className={`h-2 w-2 rounded-full ${isOn ? 'bg-emerald-400' : 'bg-slate-600'}`} />
-                    <span className={`text-xs font-semibold ${isOn ? 'text-emerald-400' : 'text-slate-500'}`}>{isOn ? 'ON' : 'OFF'}</span>
-                  </div>
-                  <button
-                    className="focus:outline-none"
-                    disabled={submitting}
-                    onClick={() => onToggleDevice(device)}
-                    type="button"
-                  >
-                    <div className={`${styles.toggleTrack} ${isOn ? styles.toggleTrackOn : styles.toggleTrackOff}`}>
-                      <div className={`${styles.toggleKnob} ${isOn ? styles.toggleKnobOn : styles.toggleKnobOff}`} />
-                    </div>
-                  </button>
-                </div>
-
-                <div className="mt-3 flex gap-2">
-                  <button
-                    className="rounded-lg border border-white/15 bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition hover:border-emerald-300/45"
-                    onClick={() => onEditDevice(device)}
-                    type="button"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="rounded-lg border border-rose-400/20 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300 transition hover:bg-rose-500/20"
-                    onClick={() => onDeleteDevice(device.id, device.name)}
-                    type="button"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+        <div className="grid items-start gap-3 sm:grid-cols-2">
+          {filteredDevices.map((device) => (
+            <DeviceControlCard
+              device={device}
+              isFavorite={favoriteDeviceIds.has(device.id)}
+              key={device.id}
+              onDeleteDevice={onDeleteDevice}
+              onEditDevice={onEditDevice}
+              onSaveDeviceSettings={onSaveDeviceSettings}
+              onToggleDevice={onToggleDevice}
+              onToggleFavorite={onToggleFavorite}
+              roomName={roomMap.get(device.room_id)?.name ?? '—'}
+              submitting={submitting}
+            />
+          ))}
           {devices.length === 0 && (
             <p className="col-span-full rounded-xl border border-dashed border-white/15 p-8 text-center text-sm text-slate-500">
               No devices yet. Add rooms first, then create devices.

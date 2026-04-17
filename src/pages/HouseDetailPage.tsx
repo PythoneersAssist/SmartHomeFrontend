@@ -37,6 +37,7 @@ export function HouseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(() => new Date());
 
   const [roomForm, setRoomForm] = useState<RoomFormState>(initialRoomForm);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
@@ -166,6 +167,16 @@ export function HouseDetailPage() {
     }
   }, [houseRooms, selectedRoomId]);
 
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, []);
+
   if (!houseId || !house) {
     return <Navigate to="/houses" replace />;
   }
@@ -263,13 +274,32 @@ export function HouseDetailPage() {
       await backendApi.updateDevice({
         device_id: editingDevice.id,
         name: editingDevice.name,
+        room_id: editingDevice.room_id,
         parameters: editingDevice.parameters as Record<string, unknown>,
       });
       setEditingDevice(null);
       await loadData();
-      addToast('Device updated successfully');
+      addToast('Device settings updated successfully');
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Failed to update device');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleSaveDeviceSettings(device: Device, parameters: Record<string, unknown>) {
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      await backendApi.updateDevice({
+        device_id: device.id,
+        parameters,
+      });
+      await loadData();
+      addToast(`${device.name} controls updated`);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Failed to save device controls');
     } finally {
       setSubmitting(false);
     }
@@ -355,10 +385,10 @@ export function HouseDetailPage() {
           <div className="flex items-center gap-4">
             <div className="hidden text-right text-sm md:block">
               <p className="text-slate-300">
-                {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
               </p>
               <p className="text-[11px] text-slate-500">
-                {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                {currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
               </p>
             </div>
             <NotificationBell />
@@ -388,6 +418,9 @@ export function HouseDetailPage() {
                   selectedRoomId={selectedRoomId}
                   onSelectRoom={setSelectedRoomId}
                   onToggleDevice={(d) => void handleToggleDevice(d)}
+                  onSaveDeviceSettings={handleSaveDeviceSettings}
+                  onEditDevice={setEditingDevice}
+                  onDeleteDevice={(id, name) => setPendingDelete({ kind: 'device', deviceId: id, deviceName: name })}
                   favoriteDeviceIds={favoriteDeviceIdSet}
                   onToggleFavorite={handleToggleFavorite}
                   submitting={submitting}
@@ -417,6 +450,7 @@ export function HouseDetailPage() {
                   onDeviceFormChange={setDeviceForm}
                   onCreateDevice={handleCreateDevice}
                   onEditDevice={setEditingDevice}
+                  onSaveDeviceSettings={handleSaveDeviceSettings}
                   onDeleteDevice={(id, name) => setPendingDelete({ kind: 'device', deviceId: id, deviceName: name })}
                   onToggleDevice={(d) => void handleToggleDevice(d)}
                   deviceSearch={deviceSearch}
@@ -434,6 +468,9 @@ export function HouseDetailPage() {
                   favoriteDevices={favoriteDevices}
                   roomMap={roomMap}
                   onToggleDevice={(d) => void handleToggleDevice(d)}
+                  onSaveDeviceSettings={handleSaveDeviceSettings}
+                  onEditDevice={setEditingDevice}
+                  onDeleteDevice={(id, name) => setPendingDelete({ kind: 'device', deviceId: id, deviceName: name })}
                   onToggleFavorite={handleToggleFavorite}
                   submitting={submitting}
                 />
@@ -474,9 +511,11 @@ export function HouseDetailPage() {
       {editingDevice && (
         <EditDeviceModal
           device={editingDevice}
+          rooms={houseRooms}
           onChange={setEditingDevice}
           onSubmit={handleUpdateDevice}
           onClose={() => setEditingDevice(null)}
+          submitting={submitting}
         />
       )}
 
