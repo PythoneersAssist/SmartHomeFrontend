@@ -23,7 +23,7 @@ const HouseContext = createContext<HouseContextType | null>(null);
 export function HouseProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
   const [houses, setHouses] = useState<House[]>([]);
-  const [housesLoading, setHousesLoading] = useState(false);
+  const [housesLoading, setHousesLoading] = useState(true);
 
   const refreshHouses = useCallback(async () => {
     setHousesLoading(true);
@@ -42,6 +42,7 @@ export function HouseProvider({ children }: { children: ReactNode }) {
       refreshHouses();
     } else {
       setHouses([]);
+      setHousesLoading(false);
     }
   }, [isAuthenticated, refreshHouses]);
 

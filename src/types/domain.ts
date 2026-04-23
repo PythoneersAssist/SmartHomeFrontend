@@ -114,6 +114,33 @@ export type HouseholdEnergy = {
   devices: DeviceEnergy[];
 };
 
+export type EnergyHistoryPoint = {
+  hour_slot: string;
+  total_estimated_watts?: number;
+  active_devices?: number;
+  total_devices?: number;
+  estimated_watts?: number;
+  is_on?: boolean;
+};
+
+export type EnergyHistoryResponse = {
+  house_id?: string;
+  house_name?: string;
+  room_id?: string;
+  room_name?: string;
+  device_id?: string;
+  device_name?: string;
+  device_type?: number;
+  hours: number;
+  history: EnergyHistoryPoint[];
+  summary?: {
+    total_kwh: number;
+    estimated_cost: number;
+    currency: string;
+    rate_per_kwh: number;
+  };
+};
+
 // ─── Notifications ─────────────────────────────
 export type Notification = {
   id: string;

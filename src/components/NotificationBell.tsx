@@ -18,6 +18,7 @@ type ToastNotification = UiNotification & {
 type RealtimeEventPayload = {
   event?: string;
   timestamp?: string;
+  notificationId?: string;
   deviceId?: string;
   status?: string;
   automationId?: string;
@@ -43,7 +44,7 @@ function makeNotification(
     const deviceName = getDeviceName(payload.deviceId);
     const isOn = payload.status === 'on';
     return {
-      id: `${createdAt}-device-${payload.deviceId ?? 'unknown'}`,
+      id: payload.notificationId ?? `${createdAt}-device-${payload.deviceId ?? 'unknown'}`,
       title: isOn ? 'Device turned on' : 'Device turned off',
       message: `${deviceName} is now ${isOn ? 'ON' : 'OFF'}.`,
       is_read: false,
@@ -57,7 +58,7 @@ function makeNotification(
       ? ` (trigger: ${payload.triggerValue})`
       : '';
     return {
-      id: `${createdAt}-automation-trigger-${payload.automationId ?? 'unknown'}`,
+      id: payload.notificationId ?? `${createdAt}-automation-trigger-${payload.automationId ?? 'unknown'}`,
       title: 'Automation triggered',
       message: `${payload.automationName ?? 'Automation'} executed for ${deviceName}${triggerText}.`,
       is_read: false,
@@ -68,7 +69,7 @@ function makeNotification(
   if (payload.event === 'automationChanged') {
     const actionLabel = payload.action ?? 'updated';
     return {
-      id: `${createdAt}-automation-change-${payload.automationId ?? 'unknown'}`,
+      id: payload.notificationId ?? `${createdAt}-automation-change-${payload.automationId ?? 'unknown'}`,
       title: `Automation ${actionLabel}`,
       message: `${payload.automationName ?? 'Automation'} was ${actionLabel}.`,
       is_read: false,
@@ -117,7 +118,20 @@ export function NotificationBell() {
       }
     }
 
+    async function loadStoredNotifications() {
+      try {
+        const stored = await backendApi.getNotifications();
+        if (!active) {
+          return;
+        }
+        setNotifications(stored.slice(0, 60));
+      } catch {
+        // If fetching notification history fails, realtime notifications will still work.
+      }
+    }
+
     void loadDeviceNames();
+    void loadStoredNotifications();
 
     return () => {
       active = false;
@@ -215,7 +229,7 @@ export function NotificationBell() {
             return;
           }
 
-          setNotifications((prev) => [notification, ...prev].slice(0, 60));
+          setNotifications((prev) => [notification, ...prev.filter((item) => item.id !== notification.id)].slice(0, 60));
           pushToast(notification);
         } catch {
           // ignore malformed realtime payloads
@@ -270,6 +284,8 @@ export function NotificationBell() {
       window.clearTimeout(timers.remove);
       delete toastTimersRef.current[notificationId];
     }
+
+    void backendApi.deleteNotification(notificationId).catch(() => undefined);
   }
 
   function handleSwipeStart(event: React.PointerEvent<HTMLDivElement>, notificationId: string) {
@@ -379,8 +395,14 @@ export function NotificationBell() {
   }, [open]);
 
   function handleOpen() {
-    setNotifications((prev) => prev.map((item) => ({ ...item, is_read: true })));
-    setOpen((prev) => !prev);
+    setOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setNotifications((items) => items.map((item) => ({ ...item, is_read: true })));
+        void backendApi.markAllNotificationsRead().catch(() => undefined);
+      }
+      return next;
+    });
   }
 
   return (

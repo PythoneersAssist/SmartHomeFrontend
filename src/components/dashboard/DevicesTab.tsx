@@ -13,7 +13,7 @@ type Props = {
   roomMap: Map<string, Room>;
   deviceForm: DeviceFormState;
   onDeviceFormChange: (form: DeviceFormState) => void;
-  onCreateDevice: (e: FormEvent<HTMLFormElement>) => void;
+  onCreateDevice: (e: FormEvent<HTMLFormElement>) => Promise<boolean>;
   onEditDevice: (device: Device) => void;
   onSaveDeviceSettings: (device: Device, parameters: Record<string, unknown>) => Promise<void>;
   onDeleteDevice: (deviceId: string, deviceName: string) => void;
@@ -124,9 +124,11 @@ export function DevicesTab({
         <section className={`${styles.modal} fixed inset-0 z-20 grid place-items-center px-4`}>
           <form
             className={`${styles.modalCard} w-full max-w-lg p-6 shadow-2xl`}
-            onSubmit={(e) => {
-              onCreateDevice(e);
-              setShowCreateModal(false);
+            onSubmit={async (e) => {
+              const created = await onCreateDevice(e);
+              if (created) {
+                setShowCreateModal(false);
+              }
             }}
           >
             <h3 className="text-xl font-extrabold text-white">Add Device</h3>

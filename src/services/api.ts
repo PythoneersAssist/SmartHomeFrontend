@@ -5,6 +5,7 @@ import type {
   Device,
   DeviceCreateInput,
   DeviceUpdateInput,
+  EnergyHistoryResponse,
   House,
   HouseholdEnergy,
   Notification,
@@ -192,6 +193,15 @@ export const backendApi = {
   // Energy
   getHouseholdEnergy: (houseId: string) =>
     apiRequest<HouseholdEnergy>(`/energy/household/${houseId}`),
+
+  getHouseholdEnergyHistory: (houseId: string, hours = 24) =>
+    apiRequest<EnergyHistoryResponse>(`/energy/household/${houseId}/history?hours=${hours}`),
+
+  getRoomEnergyHistory: (roomId: string, hours = 24) =>
+    apiRequest<EnergyHistoryResponse>(`/energy/room/${roomId}/history?hours=${hours}`),
+
+  getDeviceEnergyHistory: (deviceId: string, hours = 24) =>
+    apiRequest<EnergyHistoryResponse>(`/energy/device/${deviceId}/history?hours=${hours}`),
 
   // Notifications
   getNotifications: async (): Promise<Notification[]> => {

@@ -26,7 +26,7 @@ import { DEFAULT_ROOM_TYPE, DEVICE_TYPE_LABELS } from '../types/domain';
 export function HouseDetailPage() {
   const { houseId } = useParams();
   const { user, logout } = useAuth();
-  const { houses } = useHouseStore();
+  const { houses, housesLoading } = useHouseStore();
   const { addToast } = useToast();
 
   const house = useMemo(() => houses.find((item) => item.id === houseId) ?? null, [houseId, houses]);
@@ -177,13 +177,25 @@ export function HouseDetailPage() {
     };
   }, []);
 
-  if (!houseId || !house) {
+  if (!houseId) {
     return <Navigate to="/houses" replace />;
   }
 
-  async function handleCreateRoom(event: FormEvent<HTMLFormElement>) {
+  if (housesLoading) {
+    return (
+      <div className="appShellBackground flex h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!house) {
+    return <Navigate to="/houses" replace />;
+  }
+
+  async function handleCreateRoom(event: FormEvent<HTMLFormElement>): Promise<boolean> {
     event.preventDefault();
-    if (!houseId) return;
+    if (!houseId) return false;
 
     setSubmitting(true);
     setError(null);
@@ -193,8 +205,10 @@ export function HouseDetailPage() {
       setRoomForm(initialRoomForm);
       await loadData();
       addToast('Room created successfully');
+      return true;
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Failed to create room');
+      return false;
     } finally {
       setSubmitting(false);
     }
@@ -238,9 +252,9 @@ export function HouseDetailPage() {
     }
   }
 
-  async function handleCreateDevice(event: FormEvent<HTMLFormElement>) {
+  async function handleCreateDevice(event: FormEvent<HTMLFormElement>): Promise<boolean> {
     event.preventDefault();
-    if (!houseId) return;
+    if (!houseId) return false;
 
     setSubmitting(true);
     setError(null);
@@ -254,8 +268,10 @@ export function HouseDetailPage() {
       setDeviceForm((prev) => ({ ...initialDeviceForm, room_id: prev.room_id }));
       await loadData();
       addToast('Device created successfully');
+      return true;
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Failed to create device');
+      return false;
     } finally {
       setSubmitting(false);
     }

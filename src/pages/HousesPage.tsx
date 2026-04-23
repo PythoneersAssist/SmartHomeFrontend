@@ -31,7 +31,7 @@ export function HousesPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  async function handleCreate(event: FormEvent<HTMLFormElement>) {
+  async function handleCreate(event: FormEvent<HTMLFormElement>): Promise<boolean> {
     event.preventDefault();
     setError(null);
     setSubmitting(true);
@@ -40,8 +40,10 @@ export function HousesPage() {
       await createHouse(form);
       setForm(initialForm);
       addToast('House created successfully');
+      return true;
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Failed to create house');
+      return false;
     } finally {
       setSubmitting(false);
     }
@@ -193,8 +195,10 @@ export function HousesPage() {
           <form
             className={`${styles.modalCard} w-full max-w-md p-6 shadow-2xl`}
             onSubmit={async (event) => {
-              await handleCreate(event);
-              setCreatingHouse(false);
+              const created = await handleCreate(event);
+              if (created) {
+                setCreatingHouse(false);
+              }
             }}
           >
             <h3 className="text-xl font-extrabold text-white">Add New House</h3>

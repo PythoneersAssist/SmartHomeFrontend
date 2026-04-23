@@ -11,7 +11,7 @@ type Props = {
   devices: Device[];
   roomForm: RoomFormState;
   onRoomFormChange: (form: RoomFormState) => void;
-  onCreateRoom: (e: FormEvent<HTMLFormElement>) => void;
+  onCreateRoom: (e: FormEvent<HTMLFormElement>) => Promise<boolean>;
   onEditRoom: (room: Room) => void;
   onDeleteRoom: (room: Room) => void;
   submitting: boolean;
@@ -82,9 +82,11 @@ export function RoomsTab({ rooms, devices, roomForm, onRoomFormChange, onCreateR
         <section className={`${styles.modal} fixed inset-0 z-20 grid place-items-center px-4`}>
           <form
             className={`${styles.modalCard} w-full max-w-md p-6 shadow-2xl`}
-            onSubmit={(e) => {
-              onCreateRoom(e);
-              setShowCreateModal(false);
+            onSubmit={async (e) => {
+              const created = await onCreateRoom(e);
+              if (created) {
+                setShowCreateModal(false);
+              }
             }}
           >
             <h3 className="text-xl font-extrabold text-white">Add Room</h3>
