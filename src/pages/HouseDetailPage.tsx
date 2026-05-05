@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { NotificationBell } from '../components/NotificationBell';
+import GeminiChat from '../components/GeminiChat';
+import { localData } from '../services/storage';
 import { AutomationsTab } from '../components/dashboard/AutomationsTab';
 import { DashboardSidebar } from '../components/dashboard/DashboardSidebar';
 import { DevicesTab } from '../components/dashboard/DevicesTab';
@@ -19,9 +21,26 @@ import { useAuth } from '../contexts/AuthContext';
 import { useHouseStore } from '../contexts/HouseContext';
 import { useToast } from '../contexts/ToastContext';
 import { backendApi } from '../services/api';
-import { localData } from '../services/storage';
 import type { Device, Room } from '../types/domain';
 import { DEFAULT_ROOM_TYPE, DEVICE_TYPE_LABELS } from '../types/domain';
+
+type RealtimeDeviceEventPayload = {
+  event?: string;
+  deviceId?: string;
+  status?: string | number | boolean | null;
+};
+
+function parseDeviceStatus(status: RealtimeDeviceEventPayload['status']): boolean | null {
+  if (status === true || status === 'on' || status === 'true' || status === 1 || status === '1') {
+    return true;
+  }
+
+  if (status === false || status === 'off' || status === 'false' || status === 0 || status === '0') {
+    return false;
+  }
+
+  return null;
+}
 
 export function HouseDetailPage() {
   const { houseId } = useParams();
@@ -57,6 +76,7 @@ export function HouseDetailPage() {
   const [deviceSearch, setDeviceSearch] = useState('');
   const [deviceTypeFilter, setDeviceTypeFilter] = useState<number | -2>(-2); // -2 = all
   const [favoriteDeviceIds, setFavoriteDeviceIds] = useState<string[]>([]);
+  const [showChat, setShowChat] = useState(false);
 
   // Filter devices to only those belonging to this house's rooms
   const roomIds = useMemo(() => new Set(rooms.map((r) => r.id)), [rooms]);
@@ -95,7 +115,7 @@ export function HouseDetailPage() {
     return result;
   }, [houseDevices, deviceSearch, deviceTypeFilter, roomMap]);
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
     if (!houseId) return;
     setLoading(true);
     setError(null);
@@ -112,12 +132,34 @@ export function HouseDetailPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [houseId]);
+
+  const handleRealtimeEvent = useCallback((payload: RealtimeDeviceEventPayload) => {
+    if (payload.event !== 'automationTriggered' && payload.event !== 'deviceStatusChanged') {
+      return;
+    }
+
+    const nextStatus = parseDeviceStatus(payload.status);
+    if (!payload.deviceId || nextStatus === null) {
+      return;
+    }
+
+    setDevices((prev) => prev.map((device) => (
+      device.id === payload.deviceId
+        ? {
+            ...device,
+            parameters: {
+              ...(device.parameters as Record<string, unknown>),
+              status: nextStatus,
+            },
+          }
+        : device
+    )));
+  }, []);
 
   useEffect(() => {
     void loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [houseId]);
+  }, [loadData]);
 
   useEffect(() => {
     if (!houseId) {
@@ -407,12 +449,36 @@ export function HouseDetailPage() {
                 {currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
               </p>
             </div>
-            <NotificationBell />
+            <NotificationBell onRealtimeEvent={handleRealtimeEvent} />
+            <button
+              onClick={() => setShowChat((s) => !s)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 bg-slate-800/60 text-sm font-bold text-slate-300 transition hover:text-emerald-300"
+              type="button"
+              title="Chat"
+            >
+              💬
+            </button>
             <Link to="/profile" className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/15 transition hover:bg-emerald-500/25">
               <span className="text-sm font-bold text-emerald-300">{user?.username?.[0]?.toUpperCase() ?? '?'}</span>
             </Link>
           </div>
         </header>
+
+        {/* Chat Modal */}
+        {showChat && user && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="relative max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-slate-900 p-6">
+              <button
+                onClick={() => setShowChat(false)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-200"
+                type="button"
+              >
+                ✕
+              </button>
+              <GeminiChat token={localData.getSession()?.accessToken || ''} />
+            </div>
+          </div>
+        )}
 
         {/* Tab Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6">

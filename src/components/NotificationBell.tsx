@@ -29,6 +29,10 @@ type RealtimeEventPayload = {
   action?: string;
 };
 
+type NotificationBellProps = {
+  onRealtimeEvent?: (payload: RealtimeEventPayload) => void | Promise<void>;
+};
+
 function buildNotificationsWebSocketUrl(token: string): string {
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
   return `${protocol}://${window.location.host}/api/notifications/ws?token=${encodeURIComponent(token)}`;
@@ -80,7 +84,7 @@ function makeNotification(
   return null;
 }
 
-export function NotificationBell() {
+export function NotificationBell({ onRealtimeEvent }: NotificationBellProps) {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<UiNotification[]>([]);
   const [toastNotifications, setToastNotifications] = useState<ToastNotification[]>([]);
@@ -231,6 +235,7 @@ export function NotificationBell() {
 
           setNotifications((prev) => [notification, ...prev.filter((item) => item.id !== notification.id)].slice(0, 60));
           pushToast(notification);
+          void onRealtimeEvent?.(payload);
         } catch {
           // ignore malformed realtime payloads
         }
@@ -264,7 +269,7 @@ export function NotificationBell() {
       });
       toastTimersRef.current = {};
     };
-  }, []);
+  }, [onRealtimeEvent]);
 
   function removeNotification(notificationId: string) {
     setNotifications((prev) => prev.filter((item) => item.id !== notificationId));

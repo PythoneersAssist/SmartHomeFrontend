@@ -78,6 +78,8 @@ export type Automation = {
   trigger_value: string | null;
   execution_day: number | null;
   device_id: string;
+  turn_on: boolean;
+  parameters?: Record<string, unknown>;
 };
 
 export type AutomationCreateInput = {
@@ -86,6 +88,8 @@ export type AutomationCreateInput = {
   trigger_value?: string;
   execution_day?: number;
   device_id: string;
+  turn_on: boolean;
+  parameters?: Record<string, unknown>;
 };
 
 export type AutomationUpdateInput = {
@@ -94,6 +98,8 @@ export type AutomationUpdateInput = {
   trigger_type?: number;
   trigger_value?: string;
   execution_day?: number;
+  turn_on?: boolean;
+  parameters?: Record<string, unknown>;
 };
 
 // ─── Energy ────────────────────────────────────

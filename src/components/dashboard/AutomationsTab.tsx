@@ -5,6 +5,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { backendApi } from '../../services/api';
 import type { Automation, AutomationCreateInput, Device } from '../../types/domain';
 import { AUTOMATION_TRIGGER_LABELS, AUTOMATION_TRIGGER_OPTIONS, DEVICE_TYPE_LABELS } from '../../types/domain';
+import { DeviceParamEditor } from './DeviceParamEditor';
 import styles from './dashboard.module.css';
 
 type AutomationsTabProps = {
@@ -155,6 +156,9 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
   const [formTriggerValue, setFormTriggerValue] = useState('');
   const [formExecutionDay, setFormExecutionDay] = useState<string>('');
   const [formDeviceId, setFormDeviceId] = useState('');
+  const [formDeviceType, setFormDeviceType] = useState(0);
+  const [formTurnOn, setFormTurnOn] = useState(true);
+  const [formParameters, setFormParameters] = useState<Record<string, unknown>>({});
 
   const [editing, setEditing] = useState<Automation | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -196,7 +200,10 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
 
   useEffect(() => {
     if (houseDevices.length > 0 && !formDeviceId) {
-      setFormDeviceId(houseDevices[0].id);
+      const firstDevice = houseDevices[0];
+      setFormDeviceId(firstDevice.id);
+      setFormDeviceType(firstDevice.type);
+      setFormParameters({ ...firstDevice.parameters });
     }
   }, [houseDevices, formDeviceId]);
 
@@ -205,7 +212,11 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
     setFormTriggerType(0);
     setFormTriggerValue('');
     setFormExecutionDay('');
-    setFormDeviceId(houseDevices[0]?.id ?? '');
+    const firstDevice = houseDevices[0];
+    setFormDeviceId(firstDevice?.id ?? '');
+    setFormDeviceType(firstDevice?.type ?? 0);
+    setFormTurnOn(true);
+    setFormParameters(firstDevice?.parameters ? { ...firstDevice.parameters } : {});
   }
 
   async function handleCreate(e: FormEvent) {
@@ -234,12 +245,18 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
         setFormTriggerValue(normalizedCreateTime);
       }
 
+      const filteredParams = Object.entries(formParameters)
+        .filter(([key]) => key !== 'status')
+        .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
+
       const payload: AutomationCreateInput = {
         name: formName,
         trigger_type: formTriggerType,
         trigger_value: createPayloadTime || undefined,
         execution_day: formExecutionDay ? Number(formExecutionDay) : undefined,
         device_id: formDeviceId,
+        turn_on: formTurnOn,
+        parameters: Object.keys(filteredParams).length > 0 ? filteredParams : undefined,
       };
       await backendApi.createAutomation(payload);
       resetForm();
@@ -281,12 +298,20 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
         setEditing((prev) => prev ? { ...prev, trigger_value: normalizedEditTime } : prev);
       }
 
+      const filteredParams = editing.parameters
+        ? Object.entries(editing.parameters)
+          .filter(([key]) => key !== 'status')
+          .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {})
+        : {};
+
       await backendApi.updateAutomation({
         automation_id: editing.id,
         name: editing.name,
         trigger_type: editing.trigger_type,
         trigger_value: updatePayloadTime || undefined,
         execution_day: editing.execution_day ?? undefined,
+        turn_on: editing.turn_on,
+        parameters: Object.keys(filteredParams).length > 0 ? filteredParams : undefined,
       });
       setEditing(null);
       await loadAutomations();
@@ -432,7 +457,12 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
                 Device
                 <select
                   className={styles.formInput}
-                  onChange={(e) => setFormDeviceId(e.target.value)}
+                  onChange={(e) => {
+                    setFormDeviceId(e.target.value);
+                    const selectedDevice = houseDevices.find((d) => d.id === e.target.value);
+                    setFormDeviceType(selectedDevice?.type ?? 0);
+                    setFormParameters(selectedDevice?.parameters ? { ...selectedDevice.parameters } : {});
+                  }}
                   required
                   value={formDeviceId}
                 >
@@ -496,6 +526,35 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
                     <option key={idx} value={idx}>{label}</option>
                   ))}
                 </select>
+              </label>
+              {Object.entries(formParameters).filter(([key]) => key !== 'status').length > 0 && (
+                <div>
+                  <p className="mb-3 text-xs font-semibold text-slate-300">Device Parameters (optional)</p>
+                  <DeviceParamEditor
+                    deviceType={formDeviceType}
+                    parameters={Object.fromEntries(
+                      Object.entries(formParameters).filter(([key]) => key !== 'status')
+                    )}
+                    onChange={(key, value) => setFormParameters((prev) => ({ ...prev, [key]: value }))}
+                  />
+                </div>
+              )}
+              <label className="flex gap-3 items-center text-sm font-semibold text-slate-200">
+                <span className="flex-1">Device Action: {formTurnOn ? 'Turn ON' : 'Turn OFF'}</span>
+                <div className="relative h-7 w-14 rounded-full bg-slate-700 transition-colors" style={{ backgroundColor: formTurnOn ? '#22c55e' : '#64748b' }}>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    value={formTurnOn ? 1 : 0}
+                    onChange={(e) => setFormTurnOn(e.target.value === '1')}
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  />
+                  <div
+                    className="absolute top-1 h-5 w-5 rounded-full bg-white transition-transform duration-200"
+                    style={{ transform: formTurnOn ? 'translateX(28px)' : 'translateX(2px)' }}
+                  />
+                </div>
               </label>
             </div>
 
@@ -591,6 +650,35 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
                     <option key={idx} value={idx}>{label}</option>
                   ))}
                 </select>
+              </label>
+              {editing.parameters && Object.entries(editing.parameters).filter(([key]) => key !== 'status').length > 0 && (
+                <div>
+                  <p className="mb-3 text-xs font-semibold text-slate-300">Device Parameters (optional)</p>
+                  <DeviceParamEditor
+                    deviceType={deviceMap.get(editing.device_id)?.type ?? 0}
+                    parameters={Object.fromEntries(
+                      Object.entries(editing.parameters).filter(([key]) => key !== 'status')
+                    )}
+                    onChange={(key, value) => setEditing((prev) => prev ? { ...prev, parameters: { ...prev.parameters, [key]: value } } : prev)}
+                  />
+                </div>
+              )}
+              <label className="flex gap-3 items-center text-sm font-semibold text-slate-200">
+                <span className="flex-1">Device Action: {editing.turn_on ? 'Turn ON' : 'Turn OFF'}</span>
+                <div className="relative h-7 w-14 rounded-full bg-slate-700 transition-colors" style={{ backgroundColor: editing.turn_on ? '#22c55e' : '#64748b' }}>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    value={editing.turn_on ? 1 : 0}
+                    onChange={(e) => setEditing((prev) => prev ? { ...prev, turn_on: e.target.value === '1' } : prev)}
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  />
+                  <div
+                    className="absolute top-1 h-5 w-5 rounded-full bg-white transition-transform duration-200"
+                    style={{ transform: editing.turn_on ? 'translateX(28px)' : 'translateX(2px)' }}
+                  />
+                </div>
               </label>
             </div>
             <div className="mt-5 flex gap-2">
