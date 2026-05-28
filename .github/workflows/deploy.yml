@@ -1,0 +1,60 @@
+name: Build and deploy frontend
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Tests (lint + typecheck + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # `npm run build` runs `tsc -b` first, so this is also the typecheck gate.
+      - name: Typecheck and build
+        run: npm run build
+
+  deploy:
+    name: Deploy to Azure App Service
+    needs: test
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build production bundle
+        run: npm run build
+
+      # Strip dev dependencies so the deployed node_modules only contains what
+      # the Node server needs at runtime.
+      - name: Prune dev dependencies
+        run: npm prune --omit=dev
+
+      - name: Package app for App Service
+        run: zip -r deploy.zip server.js package.json package-lock.json dist node_modules
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: deploy.zip

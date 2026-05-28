@@ -27,8 +27,15 @@ function httpToWs(url: string) {
 }
 
 export default function GeminiChat({ token }: { token: string }) {
-  const apiBase = import.meta.env.VITE_API_BASE || "http://localhost:8000";
-  const wsUrl = `${httpToWs(apiBase)}/api/gemini/ws/chat?token=${encodeURIComponent(
+  // In dev VITE_API_BASE is unset, so we talk to the backend directly on :8000.
+  // In production it's set to "" (see .env.production) so every call is same-origin
+  // and nginx reverse-proxies /api to the backend.
+  const envApiBase = import.meta.env.VITE_API_BASE as string | undefined;
+  const apiBase = envApiBase ?? "http://localhost:8000";
+  const wsBase = apiBase
+    ? httpToWs(apiBase)
+    : `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}`;
+  const wsUrl = `${wsBase}/api/gemini/ws/chat?token=${encodeURIComponent(
     token
   )}`;
 
