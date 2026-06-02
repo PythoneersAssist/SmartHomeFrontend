@@ -167,6 +167,22 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
 
   const deviceMap = new Map(houseDevices.map((d) => [d.id, d]));
 
+  // Temperature/lux automations only *fire* when the house has a qualifying
+  // sensor. Creation is still allowed — show a non-blocking warning so the user
+  // knows the rule won't trigger until they add the device.
+  const hasThermostat = houseDevices.some((d) => d.type === 4);
+  const hasLightSensor = houseDevices.some((d) => d.type === 0 || d.type === 1);
+
+  function sensorWarning(triggerType: number): string | null {
+    if (triggerType === 1 && !hasThermostat) {
+      return "This temperature automation won't run until you add a thermostat to this house.";
+    }
+    if (triggerType === 2 && !hasLightSensor) {
+      return "This light automation won't run until you add a light or LED strip to this house.";
+    }
+    return null;
+  }
+
   async function loadAutomations() {
     setLoading(true);
     setError(null);
@@ -513,6 +529,11 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
                   ? 'Enter local time (HH:MM or HH:MM:SS). It is converted to UTC automatically when saved.'
                   : 'Temperature and lux triggers are checked when device parameters are updated.'}
               </p>
+              {sensorWarning(formTriggerType) && (
+                <p className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                  ⚠️ {sensorWarning(formTriggerType)}
+                </p>
+              )}
               <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
                 Day of Week (optional)
                 <select
@@ -637,6 +658,11 @@ export function AutomationsTab({ houseDevices }: AutomationsTabProps) {
                   ? 'Enter local time (HH:MM or HH:MM:SS). It is converted to UTC automatically when saved.'
                   : 'Temperature and lux triggers are checked when device parameters are updated.'}
               </p>
+              {sensorWarning(editing.trigger_type) && (
+                <p className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                  ⚠️ {sensorWarning(editing.trigger_type)}
+                </p>
+              )}
               <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
                 Day of Week
                 <select

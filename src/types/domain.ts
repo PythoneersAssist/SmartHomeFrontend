@@ -156,6 +156,38 @@ export type Notification = {
   created_at: string;
 };
 
+// ─── Device Presets ────────────────────────────
+export type Preset = {
+  id: string;
+  name: string;
+  brand: string;
+  device_type: number;
+  description: string;
+  parameters: Record<string, unknown>;
+};
+
+// ─── Password rules ────────────────────────────
+// Mirrors the backend rule: 8–72 chars, at least one lowercase, one uppercase,
+// one digit, and one symbol from !@#$%^&*(),.?":{}|<>
+export function validatePassword(password: string): string | null {
+  if (password.length < 8 || password.length > 72) {
+    return 'Password must be between 8 and 72 characters.';
+  }
+  if (!/[a-z]/.test(password)) {
+    return 'Password must include at least one lowercase letter.';
+  }
+  if (!/[A-Z]/.test(password)) {
+    return 'Password must include at least one uppercase letter.';
+  }
+  if (!/\d/.test(password)) {
+    return 'Password must include at least one digit.';
+  }
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    return 'Password must include at least one symbol (!@#$%^&*(),.?":{}|<>).';
+  }
+  return null;
+}
+
 export const DEVICE_TYPE_LABELS: Record<number, string> = {
   0: 'Light',
   1: 'LED Strip',

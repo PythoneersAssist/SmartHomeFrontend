@@ -16,6 +16,7 @@ type Props = {
   onCreateDevice: (e: FormEvent<HTMLFormElement>) => Promise<boolean>;
   onEditDevice: (device: Device) => void;
   onSaveDeviceSettings: (device: Device, parameters: Record<string, unknown>) => Promise<void>;
+  onApplyPreset: (device: Device, presetId: string) => Promise<void>;
   onDeleteDevice: (deviceId: string, deviceName: string) => void;
   onToggleDevice: (device: Device) => void;
   deviceSearch: string;
@@ -29,7 +30,7 @@ type Props = {
 
 export function DevicesTab({
   devices, filteredDevices, rooms, roomMap, deviceForm, onDeviceFormChange,
-  onCreateDevice, onEditDevice, onSaveDeviceSettings, onDeleteDevice, onToggleDevice,
+  onCreateDevice, onEditDevice, onSaveDeviceSettings, onApplyPreset, onDeleteDevice, onToggleDevice,
   deviceSearch, onSearchChange, deviceTypeFilter, onTypeFilterChange, submitting,
   favoriteDeviceIds, onToggleFavorite,
 }: Props) {
@@ -101,6 +102,7 @@ export function DevicesTab({
               onDeleteDevice={onDeleteDevice}
               onEditDevice={onEditDevice}
               onSaveDeviceSettings={onSaveDeviceSettings}
+              onApplyPreset={onApplyPreset}
               onToggleDevice={onToggleDevice}
               onToggleFavorite={onToggleFavorite}
               roomName={roomMap.get(device.room_id)?.name ?? '—'}

@@ -21,6 +21,7 @@ type RealtimeEventPayload = {
   notificationId?: string;
   deviceId?: string;
   status?: string;
+  parameters?: Record<string, unknown>;
   automationId?: string;
   automationName?: string;
   triggerType?: string | number | null;
@@ -223,6 +224,12 @@ export function NotificationBell({ onRealtimeEvent }: NotificationBellProps) {
             return;
           }
 
+          // Always forward the raw event to live-state listeners. Some events
+          // (e.g. deviceParametersChanged from the temperature simulation) are
+          // transient: they update device state but must NOT appear in the bell
+          // — makeNotification returns null for those.
+          void onRealtimeEvent?.(payload);
+
           const notification = makeNotification(payload, (deviceId) => {
             if (!deviceId) {
               return 'Unknown device';
@@ -235,7 +242,6 @@ export function NotificationBell({ onRealtimeEvent }: NotificationBellProps) {
 
           setNotifications((prev) => [notification, ...prev.filter((item) => item.id !== notification.id)].slice(0, 60));
           pushToast(notification);
-          void onRealtimeEvent?.(payload);
         } catch {
           // ignore malformed realtime payloads
         }

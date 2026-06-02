@@ -11,6 +11,7 @@ type Props = {
   onSelectRoom: (roomId: string | null) => void;
   onToggleDevice: (device: Device) => void;
   onSaveDeviceSettings: (device: Device, parameters: Record<string, unknown>) => Promise<void>;
+  onApplyPreset: (device: Device, presetId: string) => Promise<void>;
   onEditDevice: (device: Device) => void;
   onDeleteDevice: (deviceId: string, deviceName: string) => void;
   favoriteDeviceIds: Set<string>;
@@ -26,6 +27,7 @@ export function OverviewTab({
   onSelectRoom,
   onToggleDevice,
   onSaveDeviceSettings,
+  onApplyPreset,
   onEditDevice,
   onDeleteDevice,
   favoriteDeviceIds,
@@ -34,6 +36,15 @@ export function OverviewTab({
 }: Props) {
   const activeDeviceCount = devices.filter((d) => Boolean(d.parameters?.status)).length;
   const favoriteDeviceCount = devices.filter((d) => favoriteDeviceIds.has(d.id)).length;
+
+  // Live house temperature: average of thermostat readings (updated in real time
+  // by the backend simulation over the notifications socket).
+  const thermostatReadings = devices
+    .filter((d) => d.type === 4 && typeof d.parameters?.temperature === 'number')
+    .map((d) => d.parameters!.temperature as number);
+  const avgTemperature = thermostatReadings.length
+    ? thermostatReadings.reduce((sum, t) => sum + t, 0) / thermostatReadings.length
+    : null;
   const selectedRoomName = selectedRoomId ? (roomMap.get(selectedRoomId)?.name ?? 'Selected Room') : 'Favourites';
   const visibleDevices = selectedRoomId
     ? devices.filter((device) => device.room_id === selectedRoomId)
@@ -42,7 +53,7 @@ export function OverviewTab({
   return (
     <>
       {/* Stats row */}
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section className={`grid gap-4 sm:grid-cols-2 ${avgTemperature !== null ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
         <article className={`${styles.statCard} relative p-4`}>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15">
@@ -84,6 +95,27 @@ export function OverviewTab({
             </div>
           </div>
         </article>
+
+        {avgTemperature !== null && (
+          <article className={`${styles.statCard} relative p-4`}>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-400/15">
+                <svg className="h-5 w-5 text-rose-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9a3 3 0 013 3m-3-9a3 3 0 00-3 3v8.13a4 4 0 103.95.41A1 1 0 0013 13.13V6a3 3 0 00-1-3z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">House Temperature</p>
+                <p className="text-2xl font-black text-white">
+                  {avgTemperature.toFixed(1)}<span className="text-sm font-semibold text-slate-400">°C</span>
+                </p>
+                {thermostatReadings.length > 1 && (
+                  <p className="text-[11px] text-slate-500">avg of {thermostatReadings.length} thermostats</p>
+                )}
+              </div>
+            </div>
+          </article>
+        )}
       </section>
 
       {/* Room Tabs */}
@@ -136,6 +168,7 @@ export function OverviewTab({
               onDeleteDevice={onDeleteDevice}
               onEditDevice={onEditDevice}
               onSaveDeviceSettings={onSaveDeviceSettings}
+              onApplyPreset={onApplyPreset}
               onToggleDevice={onToggleDevice}
               onToggleFavorite={onToggleFavorite}
               roomName={roomMap.get(device.room_id)?.name ?? '—'}

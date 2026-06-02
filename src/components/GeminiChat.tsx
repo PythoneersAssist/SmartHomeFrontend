@@ -26,7 +26,7 @@ function httpToWs(url: string) {
   return url;
 }
 
-export default function GeminiChat({ token }: { token: string }) {
+export default function GeminiChat({ token, onDataMutation }: { token: string; onDataMutation?: () => void }) {
   // In dev VITE_API_BASE is unset, so we talk to the backend directly on :8000.
   // In production it's set to "" (see .env.production) so every call is same-origin
   // and nginx reverse-proxies /api to the backend.
@@ -111,6 +111,21 @@ export default function GeminiChat({ token }: { token: string }) {
                 },
               ];
             });
+
+            // If the assistant created or deleted any structured entity
+            // (house/room/device), tell the host to refetch its lists so the
+            // UI reflects the mutation. We refetch canonical endpoints rather
+            // than parsing IDs out of the human-readable result strings.
+            if (data.function_calls && Array.isArray(data.function_calls)) {
+              const mutated = data.function_calls.some(
+                (fc: FunctionCall) =>
+                  typeof fc.name === 'string' &&
+                  (fc.name.startsWith('create_') || fc.name.startsWith('delete_')),
+              );
+              if (mutated) {
+                onDataMutation?.();
+              }
+            }
 
             // handle multi-match function call result
             if (data.function_calls && Array.isArray(data.function_calls)) {

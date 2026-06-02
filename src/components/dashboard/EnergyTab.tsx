@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { backendApi } from '../../services/api';
 import type { DeviceEnergy, EnergyHistoryPoint, EnergyHistoryResponse, HouseholdEnergy } from '../../types/domain';
 import { DEVICE_TYPE_LABELS } from '../../types/domain';
@@ -44,7 +44,6 @@ export function EnergyTab({ houseId }: EnergyTabProps) {
 
   if (!data) return null;
 
-  const maxWatts = Math.max(...data.devices.map((d) => d.estimated_watts), 1);
   const sorted = [...data.devices].sort((a, b) => b.estimated_watts - a.estimated_watts);
 
   return (
@@ -104,10 +103,10 @@ export function EnergyTab({ houseId }: EnergyTabProps) {
         </article>
       </section>
 
-      {/* Device Breakdown */}
+      {/* Device Breakdown Chart */}
       <section className="mt-6">
         <div className="flex items-center justify-between">
-          <p className={styles.sectionTitle}>Device Power Breakdown</p>
+          <p className={styles.sectionTitle}>Power by Device</p>
           <button
             onClick={() => setShowHistory(true)}
             className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-800/60 px-3 py-1.5 text-sm text-emerald-300 transition hover:bg-slate-700/60"
@@ -118,39 +117,18 @@ export function EnergyTab({ houseId }: EnergyTabProps) {
             Energy History
           </button>
         </div>
-        <div className="mt-3 space-y-2">
-          {sorted.map((device: DeviceEnergy) => (
-            <div
-              className="rounded-xl border border-white/10 bg-slate-900/40 px-4 py-3"
-              key={device.device_id}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className={`h-2.5 w-2.5 rounded-full ${device.is_on ? 'bg-emerald-400' : 'bg-slate-600'}`} />
-                  <div>
-                    <p className="text-sm font-bold text-white">{device.device_name}</p>
-                    <p className="text-xs text-slate-400">{DEVICE_TYPE_LABELS[device.device_type] ?? 'Unknown'}</p>
-                  </div>
-                </div>
-                <p className={`text-sm font-bold ${device.is_on ? 'text-amber-300' : 'text-slate-500'}`}>
-                  {device.estimated_watts} W
-                </p>
-              </div>
-              {/* Bar */}
-              <div className="mt-2 h-1.5 w-full rounded-full bg-slate-700/50">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    width: `${(device.estimated_watts / maxWatts) * 100}%`,
-                    background: device.is_on
-                      ? 'linear-gradient(90deg, #10b981, #f59e0b)'
-                      : 'rgb(71, 85, 105)',
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-          {data.devices.length === 0 && (
+        <div className="mt-3">
+          {data.devices.length > 0 ? (
+            <BarChart
+              bars={sorted.map((device: DeviceEnergy) => ({
+                label: device.device_name,
+                value: device.estimated_watts,
+                on: device.is_on,
+                tooltip: `${device.device_name} · ${DEVICE_TYPE_LABELS[device.device_type] ?? 'Unknown'}`,
+              }))}
+              unit="W"
+            />
+          ) : (
             <p className="rounded-xl border border-dashed border-white/15 p-8 text-center text-sm text-slate-500">
               No devices in this house yet.
             </p>
@@ -169,6 +147,59 @@ export function EnergyTab({ houseId }: EnergyTabProps) {
   );
 }
 
+// ─── Bar Chart ────────────────────────────────────
+
+type Bar = { label: string; value: number; tooltip?: string; on?: boolean };
+
+function formatValue(value: number, unit: string) {
+  if (unit === 'W') return Math.round(value).toLocaleString();
+  return value < 1 ? value.toFixed(3) : value.toFixed(2);
+}
+
+function BarChart({ bars, unit, height = 'h-56' }: { bars: Bar[]; unit: string; height?: string }) {
+  const max = Math.max(...bars.map((b) => b.value), 1);
+  const gridLines = 4;
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-slate-900/40 p-4">
+      <div className={`relative flex ${height} items-end gap-1.5`}>
+        {/* Horizontal grid lines */}
+        <div className="pointer-events-none absolute inset-0 flex flex-col justify-between">
+          {Array.from({ length: gridLines + 1 }).map((_, i) => (
+            <div key={i} className="border-t border-white/6" />
+          ))}
+        </div>
+
+        {bars.map((bar, i) => (
+          <div key={i} className="group relative flex flex-1 flex-col items-center justify-end">
+            {/* Tooltip */}
+            <div className="pointer-events-none absolute bottom-full z-10 mb-2 hidden whitespace-nowrap rounded-lg border border-white/10 bg-slate-800 px-2.5 py-1.5 text-xs shadow-xl group-hover:block">
+              <span className="font-bold text-white">{formatValue(bar.value, unit)} {unit}</span>
+              {bar.tooltip && <span className="mt-0.5 block text-slate-400">{bar.tooltip}</span>}
+            </div>
+            <div
+              className="w-full max-w-10 rounded-t-md transition-all duration-300 group-hover:brightness-125"
+              style={{
+                height: `${bar.value > 0 ? Math.max((bar.value / max) * 100, 2) : 0}%`,
+                background: bar.on === false ? 'rgb(71, 85, 105)' : 'linear-gradient(180deg, #34d399, #f59e0b)',
+              }}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* X-axis labels */}
+      <div className="mt-2 flex gap-1.5">
+        {bars.map((bar, i) => (
+          <span key={i} className="flex-1 truncate text-center text-[10px] text-slate-500" title={bar.label}>
+            {bar.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Energy History Modal ─────────────────────────
 
 type TimeRange = { label: string; hours: number; showAvg: boolean };
@@ -179,6 +210,52 @@ const TIME_RANGES: TimeRange[] = [
   { label: 'Last Month', hours: 720, showAvg: true },
   { label: 'Last Year', hours: 8760, showAvg: true },
 ];
+
+// Each history point holds the household's instantaneous power (W) for an hour
+// slot, so energy for that hour ≈ watts / 1000 kWh. Buckets sum those into
+// kWh consumed per hour / day / month depending on the selected range.
+function buildSeries(history: EnergyHistoryPoint[], hours: number): Bar[] {
+  if (hours <= 24) {
+    return [...history]
+      .sort((a, b) => +new Date(a.hour_slot) - +new Date(b.hour_slot))
+      .map((point) => {
+        const d = new Date(point.hour_slot);
+        return {
+          label: d.toLocaleTimeString('en-US', { hour: 'numeric' }),
+          value: (point.total_estimated_watts ?? 0) / 1000,
+          tooltip: d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
+        };
+      });
+  }
+
+  const monthly = hours > 24 * 35;
+  const buckets = new Map<string, { time: number; kwh: number }>();
+  for (const point of history) {
+    const d = new Date(point.hour_slot);
+    const key = monthly
+      ? `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`
+      : d.toISOString().split('T')[0];
+    const kwh = (point.total_estimated_watts ?? 0) / 1000;
+    const existing = buckets.get(key);
+    if (existing) existing.kwh += kwh;
+    else buckets.set(key, { time: +d, kwh });
+  }
+
+  return [...buckets.values()]
+    .sort((a, b) => a.time - b.time)
+    .map(({ time, kwh }) => {
+      const d = new Date(time);
+      return {
+        label: monthly
+          ? d.toLocaleDateString('en-US', { month: 'short' })
+          : d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' }),
+        value: kwh,
+        tooltip: monthly
+          ? d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+          : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+      };
+    });
+}
 
 function EnergyHistoryModal({ houseId, onClose }: { houseId: string; onClose: () => void }) {
   const [history, setHistory] = useState<EnergyHistoryResponse | null>(null);
@@ -208,25 +285,41 @@ function EnergyHistoryModal({ houseId, onClose }: { houseId: string; onClose: ()
   const ratePerKwh = history?.summary?.rate_per_kwh ?? 0.22;
   const currency = history?.summary?.currency ?? 'USD';
 
-  // Filter history for selected date (show hourly data for that day)
-  const selectedDayHistory = selectedDate && history
-    ? history.history.filter((point) => {
-        const pointDate = new Date(point.hour_slot).toISOString().split('T')[0];
-        return pointDate === selectedDate;
-      })
-    : [];
+  // Unique dates from history for the day picker
+  const availableDates = useMemo(
+    () =>
+      history
+        ? [...new Set(history.history.map((p) => new Date(p.hour_slot).toISOString().split('T')[0]))].sort().reverse()
+        : [],
+    [history],
+  );
 
-  // Get unique dates from history for the day picker
-  const availableDates = history
-    ? [...new Set(history.history.map((point) => new Date(point.hour_slot).toISOString().split('T')[0]))].sort().reverse()
-    : [];
+  // The chart shows hourly consumption for the picked day, otherwise the
+  // aggregated consumption across the whole selected range.
+  const chart = useMemo(() => {
+    if (!history) return { bars: [] as Bar[], title: '' };
+    if (selectedDate) {
+      const dayPoints = history.history.filter(
+        (p) => new Date(p.hour_slot).toISOString().split('T')[0] === selectedDate,
+      );
+      return {
+        bars: buildSeries(dayPoints, 24),
+        title: `Hourly Consumption — ${new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+        })}`,
+      };
+    }
+    return { bars: buildSeries(history.history, timeRange.hours), title: `${timeRange.label} Consumption` };
+  }, [history, selectedDate, timeRange]);
 
   const daysInRange = timeRange.hours / 24;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="w-full max-w-2xl rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -240,7 +333,7 @@ function EnergyHistoryModal({ houseId, onClose }: { houseId: string; onClose: ()
         </div>
 
         {/* Time Range Selector */}
-        <div className="mt-4 flex gap-2">
+        <div className="mt-4 flex flex-wrap gap-2">
           {TIME_RANGES.map((range) => (
             <button
               key={range.label}
@@ -292,13 +385,13 @@ function EnergyHistoryModal({ houseId, onClose }: { houseId: string; onClose: ()
         {/* Day Picker */}
         {!loading && !error && availableDates.length > 0 && (
           <div className="mt-4">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Select Day for Hourly View</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Drill into a Day</label>
             <select
               className="mt-2 w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-sm text-white"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
             >
-              <option value="">-- Select a day --</option>
+              <option value="">Whole range</option>
               {availableDates.map((date) => (
                 <option key={date} value={date}>
                   {new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
@@ -313,31 +406,19 @@ function EnergyHistoryModal({ houseId, onClose }: { houseId: string; onClose: ()
           </div>
         )}
 
-        {/* Hourly Data for Selected Day */}
-        {selectedDate && selectedDayHistory.length > 0 && (
-          <div className="mt-4">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-              Hourly Consumption - {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-              })}
+        {/* Consumption Chart */}
+        {!loading && !error && (
+          <div className="mt-5">
+            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+              {chart.title} <span className="text-slate-500">(kWh)</span>
             </p>
-            <div className="max-h-64 overflow-y-auto space-y-1">
-              {selectedDayHistory.map((point: EnergyHistoryPoint, index: number) => (
-                <div key={index} className="flex items-center gap-3 rounded-lg border border-white/5 bg-slate-800/30 px-3 py-2">
-                  <div className="h-2 w-2 rounded-full bg-emerald-400" />
-                  <span className="flex-1 text-xs text-slate-400">
-                    {new Date(point.hour_slot).toLocaleTimeString('en-US', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </span>
-                  <span className="text-sm font-bold text-white">
-                    {point.total_estimated_watts ?? 0} W
-                  </span>
-                </div>
-              ))}
-            </div>
+            {chart.bars.length > 0 ? (
+              <BarChart bars={chart.bars} unit="kWh" height="h-52" />
+            ) : (
+              <p className="rounded-xl border border-dashed border-white/15 p-8 text-center text-sm text-slate-500">
+                No consumption data for this period.
+              </p>
+            )}
           </div>
         )}
 

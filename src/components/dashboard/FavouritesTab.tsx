@@ -7,6 +7,7 @@ type Props = {
   roomMap: Map<string, Room>;
   onToggleDevice: (device: Device) => void;
   onSaveDeviceSettings: (device: Device, parameters: Record<string, unknown>) => Promise<void>;
+  onApplyPreset: (device: Device, presetId: string) => Promise<void>;
   onEditDevice: (device: Device) => void;
   onDeleteDevice: (deviceId: string, deviceName: string) => void;
   onToggleFavorite: (deviceId: string) => void;
@@ -18,6 +19,7 @@ export function FavouritesTab({
   roomMap,
   onToggleDevice,
   onSaveDeviceSettings,
+  onApplyPreset,
   onEditDevice,
   onDeleteDevice,
   onToggleFavorite,
@@ -41,6 +43,7 @@ export function FavouritesTab({
             onDeleteDevice={onDeleteDevice}
             onEditDevice={onEditDevice}
             onSaveDeviceSettings={onSaveDeviceSettings}
+            onApplyPreset={onApplyPreset}
             onToggleDevice={onToggleDevice}
             onToggleFavorite={onToggleFavorite}
             roomName={roomMap.get(device.room_id)?.name ?? '—'}

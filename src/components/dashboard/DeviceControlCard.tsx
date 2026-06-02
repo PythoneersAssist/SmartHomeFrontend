@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import type { Device } from '../../types/domain';
+import { useEffect, useRef, useState } from 'react';
+import type { Device, Preset } from '../../types/domain';
 import { DEVICE_TYPE_LABELS } from '../../types/domain';
+import { backendApi } from '../../services/api';
 import { DeviceParamEditor } from './DeviceParamEditor';
 import styles from './dashboard.module.css';
 
@@ -11,6 +12,7 @@ type Props = {
   onToggleFavorite: (deviceId: string) => void;
   onToggleDevice: (device: Device) => void;
   onSaveDeviceSettings: (device: Device, parameters: Record<string, unknown>) => Promise<void>;
+  onApplyPreset: (device: Device, presetId: string) => Promise<void>;
   onEditDevice: (device: Device) => void;
   onDeleteDevice: (deviceId: string, deviceName: string) => void;
   submitting: boolean;
@@ -23,14 +25,47 @@ export function DeviceControlCard({
   onToggleFavorite,
   onToggleDevice,
   onSaveDeviceSettings,
+  onApplyPreset,
   onEditDevice,
   onDeleteDevice,
   submitting,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [paramDraft, setParamDraft] = useState<Record<string, unknown> | null>(null);
+  const [presets, setPresets] = useState<Preset[]>([]);
+  const [applyingPresetId, setApplyingPresetId] = useState<string | null>(null);
+  const presetsRequested = useRef(false);
+
+  // Lazy-load the server-driven preset catalog the first time the card is
+  // expanded. Only devices with matching presets show a "Presets" section.
+  useEffect(() => {
+    if (!expanded || presetsRequested.current) {
+      return;
+    }
+
+    presetsRequested.current = true;
+    let cancelled = false;
+    backendApi
+      .getPresets(device.type)
+      .then((data) => {
+        if (!cancelled) setPresets(data);
+      })
+      .catch(() => {
+        if (!cancelled) setPresets([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [expanded, device.type]);
 
   const isOn = device.parameters?.status === true;
+  // Thermostats carry a live `temperature` reading that the backend simulation
+  // updates over the notifications socket. Surface it on the card so the value
+  // is visible without expanding the controls.
+  const temperatureReading = device.type === 4 && typeof device.parameters?.temperature === 'number'
+    ? (device.parameters.temperature as number)
+    : null;
   const baseParams = (device.parameters as Record<string, unknown>) ?? {};
   const draftParams = paramDraft ?? baseParams;
   const hasParamChanges = JSON.stringify(draftParams) !== JSON.stringify(baseParams);
@@ -54,6 +89,11 @@ export function DeviceControlCard({
         <div className="min-w-0">
           <p className="truncate font-bold text-white">{device.name}</p>
           <p className="truncate text-xs text-slate-400">{DEVICE_TYPE_LABELS[device.type] ?? 'Unknown'} &middot; {roomName}</p>
+          {temperatureReading !== null && (
+            <span className="mt-1.5 inline-flex items-center gap-1 rounded-md border border-emerald-400/25 bg-emerald-500/10 px-2 py-0.5 text-xs font-bold text-emerald-200">
+              🌡 {temperatureReading.toFixed(1)}°C
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -147,6 +187,29 @@ export function DeviceControlCard({
             Delete
           </button>
         </div>
+
+        {presets.length > 0 && (
+          <div className="mt-4 border-t border-white/10 pt-3">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Presets</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {presets.map((preset) => (
+                <button
+                  className="rounded-lg border border-violet-400/25 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold text-violet-200 transition hover:bg-violet-500/20 disabled:opacity-50"
+                  disabled={submitting || applyingPresetId !== null}
+                  key={preset.id}
+                  onClick={() => {
+                    setApplyingPresetId(preset.id);
+                    void onApplyPreset(device, preset.id).finally(() => setApplyingPresetId(null));
+                  }}
+                  title={preset.description}
+                  type="button"
+                >
+                  {applyingPresetId === preset.id ? 'Applying…' : preset.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

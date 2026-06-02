@@ -28,6 +28,7 @@ type RealtimeDeviceEventPayload = {
   event?: string;
   deviceId?: string;
   status?: string | number | boolean | null;
+  parameters?: Record<string, unknown>;
 };
 
 function parseDeviceStatus(status: RealtimeDeviceEventPayload['status']): boolean | null {
@@ -45,7 +46,7 @@ function parseDeviceStatus(status: RealtimeDeviceEventPayload['status']): boolea
 export function HouseDetailPage() {
   const { houseId } = useParams();
   const { user, logout } = useAuth();
-  const { houses, housesLoading } = useHouseStore();
+  const { houses, housesLoading, refreshHouses } = useHouseStore();
   const { addToast } = useToast();
 
   const house = useMemo(() => houses.find((item) => item.id === houseId) ?? null, [houseId, houses]);
@@ -134,7 +135,46 @@ export function HouseDetailPage() {
     }
   }, [houseId]);
 
+  // The AI assistant can now create/delete houses, rooms, and devices over the
+  // chat WebSocket. After such a turn, refetch the canonical lists so the UI
+  // reflects the mutation.
+  const handleChatMutation = useCallback(() => {
+    void loadData();
+    void refreshHouses();
+  }, [loadData, refreshHouses]);
+
+  async function handleApplyPreset(device: Device, presetId: string) {
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const result = await backendApi.applyPreset(device.id, presetId);
+      await loadData();
+      addToast(result.message ?? `Preset applied to ${device.name}`);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Failed to apply preset');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   const handleRealtimeEvent = useCallback((payload: RealtimeDeviceEventPayload) => {
+    // The temperature simulation pushes the full, updated parameter object for a
+    // device. Treat it as authoritative and replace local parameters wholesale.
+    if (payload.event === 'deviceParametersChanged') {
+      if (!payload.deviceId || !payload.parameters) {
+        return;
+      }
+
+      const nextParameters = payload.parameters;
+      setDevices((prev) => prev.map((device) => (
+        device.id === payload.deviceId
+          ? { ...device, parameters: nextParameters }
+          : device
+      )));
+      return;
+    }
+
     if (payload.event !== 'automationTriggered' && payload.event !== 'deviceStatusChanged') {
       return;
     }
@@ -475,7 +515,7 @@ export function HouseDetailPage() {
               >
                 ✕
               </button>
-              <GeminiChat token={localData.getSession()?.accessToken || ''} />
+              <GeminiChat token={localData.getSession()?.accessToken || ''} onDataMutation={handleChatMutation} />
             </div>
           </div>
         )}
@@ -501,6 +541,7 @@ export function HouseDetailPage() {
                   onSelectRoom={setSelectedRoomId}
                   onToggleDevice={(d) => void handleToggleDevice(d)}
                   onSaveDeviceSettings={handleSaveDeviceSettings}
+                  onApplyPreset={handleApplyPreset}
                   onEditDevice={setEditingDevice}
                   onDeleteDevice={(id, name) => setPendingDelete({ kind: 'device', deviceId: id, deviceName: name })}
                   favoriteDeviceIds={favoriteDeviceIdSet}
@@ -533,6 +574,7 @@ export function HouseDetailPage() {
                   onCreateDevice={handleCreateDevice}
                   onEditDevice={setEditingDevice}
                   onSaveDeviceSettings={handleSaveDeviceSettings}
+                  onApplyPreset={handleApplyPreset}
                   onDeleteDevice={(id, name) => setPendingDelete({ kind: 'device', deviceId: id, deviceName: name })}
                   onToggleDevice={(d) => void handleToggleDevice(d)}
                   deviceSearch={deviceSearch}
@@ -551,6 +593,7 @@ export function HouseDetailPage() {
                   roomMap={roomMap}
                   onToggleDevice={(d) => void handleToggleDevice(d)}
                   onSaveDeviceSettings={handleSaveDeviceSettings}
+                  onApplyPreset={handleApplyPreset}
                   onEditDevice={setEditingDevice}
                   onDeleteDevice={(id, name) => setPendingDelete({ kind: 'device', deviceId: id, deviceName: name })}
                   onToggleFavorite={handleToggleFavorite}

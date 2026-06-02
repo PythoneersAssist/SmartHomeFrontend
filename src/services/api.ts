@@ -9,6 +9,7 @@ import type {
   House,
   HouseholdEnergy,
   Notification,
+  Preset,
   Room,
   RoomCreateInput,
   RoomUpdateInput,
@@ -94,6 +95,31 @@ export const backendApi = {
       body: JSON.stringify(payload),
     }),
 
+  // Password reset (unauthenticated)
+  forgotPassword: (email: string) =>
+    apiRequest<{ message: string }>('/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+
+  resetPassword: (token: string, newPassword: string) =>
+    apiRequest<{ message: string }>('/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, new_password: newPassword }),
+    }),
+
+  // Account deletion (request requires auth; confirm carries identity in token)
+  requestAccountDeletion: () =>
+    apiRequest<{ message: string }>('/user/request-deletion', {
+      method: 'POST',
+    }),
+
+  confirmAccountDeletion: (token: string) =>
+    apiRequest<{ message: string }>('/user/confirm-deletion', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    }),
+
   // Houses
   getHouses: async (): Promise<House[]> => {
     const resp = await apiRequest<HousesResponse>('/home/get');
@@ -165,6 +191,19 @@ export const backendApi = {
   deleteDevice: (deviceId: string) =>
     apiRequest<void>(`/devices/delete/${deviceId}`, {
       method: 'DELETE',
+    }),
+
+  // Device presets (read-only catalog + apply)
+  getPresets: async (deviceType?: number): Promise<Preset[]> => {
+    const query = typeof deviceType === 'number' ? `?device_type=${deviceType}` : '';
+    const resp = await apiRequest<{ message: string; presets: Preset[] }>(`/presets/get${query}`);
+    return resp.presets;
+  },
+
+  applyPreset: (deviceId: string, presetId: string) =>
+    apiRequest<{ message: string; parameters: Record<string, unknown> }>('/presets/apply', {
+      method: 'POST',
+      body: JSON.stringify({ device_id: deviceId, preset_id: presetId }),
     }),
 
   // Automations

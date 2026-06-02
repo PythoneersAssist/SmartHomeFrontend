@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { backendApi } from '../services/api';
@@ -26,6 +27,21 @@ export function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Account deletion (two-step, email-confirmed)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletionRequested, setDeletionRequested] = useState(false);
+
+  async function handleRequestDeletion() {
+    setShowDeleteConfirm(false);
+    try {
+      await backendApi.requestAccountDeletion();
+      setDeletionRequested(true);
+      addToast('A confirmation link has been sent to your email.');
+    } catch (requestError) {
+      addToast(requestError instanceof Error ? requestError.message : 'Failed to request account deletion');
+    }
+  }
 
   useEffect(() => {
     backendApi
@@ -180,9 +196,44 @@ export function ProfilePage() {
                 </button>
               </div>
             </section>
+
+            {/* Danger zone */}
+            <section className={`${styles.card} border-rose-400/20 p-6`}>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-rose-300">Danger Zone</p>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-white">Delete account</p>
+                  <p className="mt-0.5 text-xs text-slate-400">
+                    Permanently removes your account and all houses, rooms, devices, and automations.
+                  </p>
+                </div>
+                {deletionRequested ? (
+                  <span className="rounded-lg border border-amber-300/30 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold text-amber-200">
+                    Check your email to confirm
+                  </span>
+                ) : (
+                  <button
+                    className="rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300 transition hover:bg-rose-500/20"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    type="button"
+                  >
+                    Delete account
+                  </button>
+                )}
+              </div>
+            </section>
           </>
         ) : null}
       </div>
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        title="Delete Account"
+        message="We'll email you a confirmation link. Your account is only deleted after you click that link. Continue?"
+        confirmLabel="Send confirmation email"
+        onConfirm={() => void handleRequestDeletion()}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
 
       {/* Edit modal */}
       {editField ? (
