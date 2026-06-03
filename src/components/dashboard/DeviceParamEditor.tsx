@@ -13,6 +13,7 @@ const PARAM_KEY_MAP: Record<string, string> = {
   power_setting: 'slider',
   power: 'slider',
   wash_type: 'select',
+  picture_mode: 'string-select',
 };
 
 function findControl(deviceType: number, paramKey: string): ParamControl | null {
@@ -92,6 +93,18 @@ export function DeviceParamEditor({ deviceType, parameters, onChange }: Props) {
               key={key}
               label={control.label}
               value={Number(val)}
+              options={control.options}
+              onChange={(v) => onChange(key, v)}
+            />
+          );
+        }
+
+        if (control?.kind === 'string-select') {
+          return (
+            <StringSelectControl
+              key={key}
+              label={control.label}
+              value={String(val)}
               options={control.options}
               onChange={(v) => onChange(key, v)}
             />
@@ -276,6 +289,36 @@ function SelectControl({
   label, value, options, onChange,
 }: {
   label: string; value: number; options: { value: number; label: string }[]; onChange: (v: number) => void;
+}) {
+  return (
+    <div className="grid gap-1.5">
+      <span className="text-sm font-semibold text-slate-200">{label}</span>
+      <div className="flex flex-wrap gap-2">
+        {options.map((opt) => (
+          <button
+            className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+              value === opt.value
+                ? 'border-emerald-400/40 bg-emerald-500/15 text-emerald-200'
+                : 'border-white/10 bg-slate-800/50 text-slate-400 hover:border-white/20 hover:text-slate-300'
+            }`}
+            key={opt.value}
+            onClick={() => onChange(opt.value)}
+            type="button"
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── String Select Control ──────────────────────
+
+function StringSelectControl({
+  label, value, options, onChange,
+}: {
+  label: string; value: string; options: { value: string; label: string }[]; onChange: (v: string) => void;
 }) {
   return (
     <div className="grid gap-1.5">

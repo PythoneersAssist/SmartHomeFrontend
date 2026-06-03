@@ -50,6 +50,7 @@ export type DeviceCreateInput = {
   name: string;
   device_type: number;
   room_id: string;
+  parameters?: Record<string, unknown>;
 };
 
 export type DeviceUpdateInput = {
@@ -317,7 +318,17 @@ export type ParamControl =
   | { kind: 'slider'; label: string; min: number; max: number; step: number; unit?: string }
   | { kind: 'temperature'; label: string; min: number; max: number; step: number; unit: string }
   | { kind: 'color'; label: string }
-  | { kind: 'select'; label: string; options: { value: number; label: string }[] };
+  | { kind: 'select'; label: string; options: { value: number; label: string }[] }
+  | { kind: 'string-select'; label: string; options: { value: string; label: string }[] };
+
+// TV picture modes — also offered when creating a TV and via presets.
+export const PICTURE_MODE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'movie', label: 'Movie' },
+  { value: 'gaming', label: 'Gaming' },
+  { value: 'sports', label: 'Sports' },
+];
+
+export const DEFAULT_PICTURE_MODE = 'movie';
 
 // Maps device type → ordered param controls (status is always handled separately)
 export const DEVICE_PARAM_CONTROLS: Partial<Record<number, ParamControl[]>> = {
@@ -345,6 +356,7 @@ export const DEVICE_PARAM_CONTROLS: Partial<Record<number, ParamControl[]>> = {
   ],
   // 10 = TV
   10: [
+    { kind: 'string-select', label: 'Picture Mode', options: PICTURE_MODE_OPTIONS },
     { kind: 'slider', label: 'Volume', min: 0, max: 100, step: 1, unit: '' },
   ],
   // 11 = Speaker

@@ -14,11 +14,12 @@ const BACKEND_URL = `https://${BACKEND_HOST}`;
 
 // Gemini routes live under /api/gemini on the backend — keep the prefix.
 const geminiProxy = createProxyMiddleware({
-  pathFilter: '/api/gemini',
+  pathFilter: '/api/gemini/',
   target: BACKEND_URL,
   changeOrigin: true,
   ws: true,
   xfwd: true,
+  pathRewrite: { '^/api': '' },
 });
 
 // All other /api/* routes are served at the backend root, so strip the prefix

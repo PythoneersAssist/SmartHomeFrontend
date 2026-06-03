@@ -263,7 +263,10 @@ export function HouseDetailPage() {
     return <Navigate to="/houses" replace />;
   }
 
-  if (housesLoading) {
+  // Only show the full-screen spinner on the initial load (no houses yet).
+  // Background refreshes (e.g. after the AI assistant creates/deletes an entity)
+  // must not unmount the page, or the open chat modal would lose its state.
+  if (housesLoading && houses.length === 0) {
     return (
       <div className="appShellBackground flex h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
@@ -346,6 +349,9 @@ export function HouseDetailPage() {
         name: deviceForm.name,
         device_type: deviceForm.device_type,
         room_id: deviceForm.room_id,
+        ...(Object.keys(deviceForm.parameters).length > 0
+          ? { parameters: deviceForm.parameters }
+          : {}),
       });
       setDeviceForm((prev) => ({ ...initialDeviceForm, room_id: prev.room_id }));
       await loadData();
@@ -492,11 +498,18 @@ export function HouseDetailPage() {
             <NotificationBell onRealtimeEvent={handleRealtimeEvent} />
             <button
               onClick={() => setShowChat((s) => !s)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 bg-slate-800/60 text-sm font-bold text-slate-300 transition hover:text-emerald-300"
+              className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
+                showChat
+                  ? 'bg-emerald-500/25 ring-1 ring-emerald-400/40'
+                  : 'bg-emerald-500/15 hover:bg-emerald-500/25'
+              }`}
               type="button"
-              title="Chat"
+              aria-label="AI assistant"
+              title="AI assistant"
             >
-              💬
+              <svg className="h-5 w-5 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12a8 8 0 01-11.5 7.18L4 20.5l1.32-5.5A8 8 0 1121 12z" />
+              </svg>
             </button>
             <Link to="/profile" className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/15 transition hover:bg-emerald-500/25">
               <span className="text-sm font-bold text-emerald-300">{user?.username?.[0]?.toUpperCase() ?? '?'}</span>
@@ -506,14 +519,20 @@ export function HouseDetailPage() {
 
         {/* Chat Modal */}
         {showChat && user && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="relative max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-slate-900 p-6">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm animate-[fadeInUp_0.2s_ease-out]"
+            onClick={() => setShowChat(false)}
+          >
+            <div className="relative w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
               <button
                 onClick={() => setShowChat(false)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-200"
+                className="absolute -top-3 -right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-slate-800/90 text-slate-300 shadow-lg backdrop-blur transition hover:border-rose-300/40 hover:text-rose-200"
                 type="button"
+                aria-label="Close chat"
               >
-                ✕
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
               <GeminiChat token={localData.getSession()?.accessToken || ''} onDataMutation={handleChatMutation} />
             </div>

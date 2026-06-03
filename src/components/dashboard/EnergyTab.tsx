@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { backendApi } from '../../services/api';
+import { localData } from '../../services/storage';
 import type { DeviceEnergy, EnergyHistoryPoint, EnergyHistoryResponse, HouseholdEnergy } from '../../types/domain';
 import { DEVICE_TYPE_LABELS } from '../../types/domain';
 import styles from './dashboard.module.css';
+
+// How often we sample household power and persist it to localStorage.
+const SAMPLE_INTERVAL_MS = 1000;
 
 type EnergyTabProps = {
   houseId: string;
@@ -14,20 +18,41 @@ export function EnergyTab({ houseId }: EnergyTabProps) {
   const [error, setError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
+  // Sample the household's live power once per second, refresh the on-screen
+  // stats, and persist each reading so the history charts have data to show.
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setError(null);
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    async function sample(initial: boolean) {
       try {
         const energy = await backendApi.getHouseholdEnergy(houseId);
+        if (cancelled) return;
         setData(energy);
+        setError(null);
+        localData.recordEnergySample(houseId, {
+          watts: energy.total_estimated_watts,
+          activeDevices: energy.active_devices,
+          totalDevices: energy.total_devices,
+        });
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load energy data');
+        // Only surface the error if we have nothing to show yet; transient
+        // failures during polling shouldn't blank out the tab.
+        if (!cancelled && initial) {
+          setError(err instanceof Error ? err.message : 'Failed to load energy data');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled && initial) setLoading(false);
       }
     }
-    void load();
+
+    void sample(true);
+    const timer = window.setInterval(() => void sample(false), SAMPLE_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
   }, [houseId]);
 
   if (loading) {
@@ -119,15 +144,23 @@ export function EnergyTab({ houseId }: EnergyTabProps) {
         </div>
         <div className="mt-3">
           {data.devices.length > 0 ? (
-            <BarChart
-              bars={sorted.map((device: DeviceEnergy) => ({
-                label: device.device_name,
-                value: device.estimated_watts,
-                on: device.is_on,
-                tooltip: `${device.device_name} · ${DEVICE_TYPE_LABELS[device.device_type] ?? 'Unknown'}`,
-              }))}
-              unit="W"
-            />
+            <ul className="divide-y divide-white/5 rounded-xl border border-white/10 bg-slate-900/40">
+              {sorted.map((device: DeviceEnergy) => (
+                <li key={device.device_id} className="flex items-center justify-between px-4 py-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className={`h-2 w-2 rounded-full ${device.is_on ? 'bg-emerald-400' : 'bg-slate-600'}`}
+                      aria-hidden
+                    />
+                    <div>
+                      <p className="text-sm font-semibold text-white">{device.device_name}</p>
+                      <p className="text-[11px] text-slate-400">{DEVICE_TYPE_LABELS[device.device_type] ?? 'Unknown'}</p>
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold text-white">{Math.round(device.estimated_watts).toLocaleString()} W</span>
+                </li>
+              ))}
+            </ul>
           ) : (
             <p className="rounded-xl border border-dashed border-white/15 p-8 text-center text-sm text-slate-500">
               No devices in this house yet.
@@ -154,50 +187,6 @@ type Bar = { label: string; value: number; tooltip?: string; on?: boolean };
 function formatValue(value: number, unit: string) {
   if (unit === 'W') return Math.round(value).toLocaleString();
   return value < 1 ? value.toFixed(3) : value.toFixed(2);
-}
-
-function BarChart({ bars, unit, height = 'h-56' }: { bars: Bar[]; unit: string; height?: string }) {
-  const max = Math.max(...bars.map((b) => b.value), 1);
-  const gridLines = 4;
-
-  return (
-    <div className="rounded-xl border border-white/10 bg-slate-900/40 p-4">
-      <div className={`relative flex ${height} items-end gap-1.5`}>
-        {/* Horizontal grid lines */}
-        <div className="pointer-events-none absolute inset-0 flex flex-col justify-between">
-          {Array.from({ length: gridLines + 1 }).map((_, i) => (
-            <div key={i} className="border-t border-white/6" />
-          ))}
-        </div>
-
-        {bars.map((bar, i) => (
-          <div key={i} className="group relative flex flex-1 flex-col items-center justify-end">
-            {/* Tooltip */}
-            <div className="pointer-events-none absolute bottom-full z-10 mb-2 hidden whitespace-nowrap rounded-lg border border-white/10 bg-slate-800 px-2.5 py-1.5 text-xs shadow-xl group-hover:block">
-              <span className="font-bold text-white">{formatValue(bar.value, unit)} {unit}</span>
-              {bar.tooltip && <span className="mt-0.5 block text-slate-400">{bar.tooltip}</span>}
-            </div>
-            <div
-              className="w-full max-w-10 rounded-t-md transition-all duration-300 group-hover:brightness-125"
-              style={{
-                height: `${bar.value > 0 ? Math.max((bar.value / max) * 100, 2) : 0}%`,
-                background: bar.on === false ? 'rgb(71, 85, 105)' : 'linear-gradient(180deg, #34d399, #f59e0b)',
-              }}
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* X-axis labels */}
-      <div className="mt-2 flex gap-1.5">
-        {bars.map((bar, i) => (
-          <span key={i} className="flex-1 truncate text-center text-[10px] text-slate-500" title={bar.label}>
-            {bar.label}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
 }
 
 // ─── Energy History Modal ─────────────────────────
@@ -265,19 +254,17 @@ function EnergyHistoryModal({ houseId, onClose }: { houseId: string; onClose: ()
   const [selectedDate, setSelectedDate] = useState('');
 
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-        const result = await backendApi.getHouseholdEnergyHistory(houseId, timeRange.hours);
-        setHistory(result);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load history');
-      } finally {
-        setLoading(false);
-      }
+    setLoading(true);
+    setError(null);
+    try {
+      // History is built from the per-second samples recorded locally while the
+      // energy tab is open, rather than the (currently empty) backend endpoint.
+      setHistory(localData.getEnergyHistory(houseId, timeRange.hours));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load history');
+    } finally {
+      setLoading(false);
     }
-    void load();
   }, [houseId, timeRange]);
 
   const totalKwh = history?.summary?.total_kwh ?? 0;
@@ -413,7 +400,14 @@ function EnergyHistoryModal({ houseId, onClose }: { houseId: string; onClose: ()
               {chart.title} <span className="text-slate-500">(kWh)</span>
             </p>
             {chart.bars.length > 0 ? (
-              <BarChart bars={chart.bars} unit="kWh" height="h-52" />
+              <ul className="max-h-64 divide-y divide-white/5 overflow-y-auto rounded-xl border border-white/10 bg-slate-900/40">
+                {chart.bars.map((bar, i) => (
+                  <li key={i} className="flex items-center justify-between px-4 py-2">
+                    <span className="text-sm text-slate-300" title={bar.tooltip}>{bar.tooltip ?? bar.label}</span>
+                    <span className="text-sm font-bold text-white">{formatValue(bar.value, 'kWh')} kWh</span>
+                  </li>
+                ))}
+              </ul>
             ) : (
               <p className="rounded-xl border border-dashed border-white/15 p-8 text-center text-sm text-slate-500">
                 No consumption data for this period.

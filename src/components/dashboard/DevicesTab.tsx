@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import type { Device, Room } from '../../types/domain';
-import { DEVICE_TYPE_OPTIONS } from '../../types/domain';
+import { DEVICE_TYPE_OPTIONS, PICTURE_MODE_OPTIONS, DEFAULT_PICTURE_MODE } from '../../types/domain';
+
+// Device type id for TV (see DEVICE_TYPE_LABELS).
+const TV_DEVICE_TYPE = 10;
 import { DeviceControlCard } from './DeviceControlCard';
 import type { DeviceFormState } from './types';
 import styles from './dashboard.module.css';
@@ -152,7 +155,14 @@ export function DevicesTab({
                   Type
                   <select
                     className={styles.formInput}
-                    onChange={(e) => onDeviceFormChange({ ...deviceForm, device_type: Number(e.target.value) })}
+                    onChange={(e) => {
+                      const device_type = Number(e.target.value);
+                      // Seed type-specific defaults; drop params that no longer apply.
+                      const parameters = device_type === TV_DEVICE_TYPE
+                        ? { picture_mode: DEFAULT_PICTURE_MODE }
+                        : {};
+                      onDeviceFormChange({ ...deviceForm, device_type, parameters });
+                    }}
                     required
                     value={deviceForm.device_type}
                   >
@@ -176,6 +186,24 @@ export function DevicesTab({
                   </select>
                 </label>
               </div>
+
+              {deviceForm.device_type === TV_DEVICE_TYPE && (
+                <label className="grid gap-1.5 text-sm font-semibold text-slate-200">
+                  Picture Mode
+                  <select
+                    className={styles.formInput}
+                    onChange={(e) => onDeviceFormChange({
+                      ...deviceForm,
+                      parameters: { ...deviceForm.parameters, picture_mode: e.target.value },
+                    })}
+                    value={(deviceForm.parameters.picture_mode as string) ?? DEFAULT_PICTURE_MODE}
+                  >
+                    {PICTURE_MODE_OPTIONS.map((pm) => (
+                      <option key={pm.value} value={pm.value}>{pm.label}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
             </div>
 
             <div className="mt-5 flex gap-2">
