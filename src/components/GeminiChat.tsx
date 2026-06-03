@@ -241,7 +241,7 @@ export default function GeminiChat({ token, onDataMutation }: { token: string; o
     <div className="relative flex max-h-[72vh] w-full max-w-3xl flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(61,220,151,0.14),_transparent_30%),linear-gradient(180deg,rgba(15,19,26,0.96),rgba(7,10,14,0.98))] text-slate-100 shadow-[0_28px_90px_rgba(0,0,0,0.62)] backdrop-blur-xl">
       <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4 sm:px-6">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">Gemini Assistant</p>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">AI Assistant</p>
           <h2 className="mt-1 text-lg font-extrabold text-white">Smart home chat</h2>
           <p className="mt-1 text-sm text-slate-400">Ask about devices, rooms, scenes, and automations.</p>
         </div>
@@ -325,7 +325,7 @@ export default function GeminiChat({ token, onDataMutation }: { token: string; o
             value={input}
             onChange={(e) => setInput(e.target.value)}
             className="h-12 flex-1 rounded-2xl border border-white/10 bg-slate-900/80 px-4 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-emerald-300/40 focus:ring-2 focus:ring-emerald-400/15"
-            placeholder={connecting ? "Connecting to Gemini..." : "Type a message"}
+            placeholder={connecting ? "Connecting to chatbot..." : "Type a message"}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey && input.trim()) {
                 e.preventDefault();
